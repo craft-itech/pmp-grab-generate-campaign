@@ -17,10 +17,14 @@ import { QuotaDto } from 'src/dtos/grab/quota/quota.dto';
 import { ConditionDto } from 'src/dtos/grab/condition/condition.dto';
 import { DiscountDto } from 'src/dtos/grab/discount/discount.dto';
 import { PromotionGrabmartEntity } from 'src/entity/promotion_grabmart.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class GenerateCampaignService {
   constructor(
+    @InjectRepository(PromotionGrabmartEntity)
+    private readonly promotionGrabmartRepository: Repository<PromotionGrabmartEntity>,
     private readonly amqpConnection: AmqpConnection,
     private readonly sqsService: SqsPublisherService,
     @InjectLogger(GenerateCampaignService.name)
@@ -48,7 +52,7 @@ export class GenerateCampaignService {
     );
   }
 
-  async getGrabCampaign(entity: PromotionGrabmartEntity): Promise<GrabCampaignDto> {
+  async setGrabCampaign(entity: PromotionGrabmartEntity): Promise<GrabCampaignDto> {
         // Simulate an asynchronous operation (like fetching data)
         const fetchedQuotas: QuotaDto = await this.getQuotas();
         const fetchedConditions: ConditionDto = await this.getConditions();
@@ -87,5 +91,13 @@ export class GenerateCampaignService {
         });
     }
 
-
+    async getPromotionsByMerchantId(merchantId: string): Promise<PromotionGrabmartEntity[]> {
+      return await this.promotionGrabmartRepository.find({
+        where: { merchant_id: merchantId },
+        order: {
+          promotion_mode: 'ASC',
+          created_date: 'ASC',
+        },
+      });
+    }
 }
