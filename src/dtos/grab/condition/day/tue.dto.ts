@@ -1,4 +1,4 @@
-import { Period } from "../condition/period.dto";
+import { Period } from "../period.dto";
 
 export class Tuesday{
     periods: Period[]

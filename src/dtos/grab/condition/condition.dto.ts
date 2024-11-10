@@ -1,7 +1,7 @@
 import { WorkingHour } from "./workinghour.dto"
 
 
-export class Condition{
+export class ConditionDto{
     startTime: string
     endTime: string
     eaterType: string

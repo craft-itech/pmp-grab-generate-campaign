@@ -12,6 +12,11 @@ import {
   NestjsWinstonLoggerService,
 } from 'nestjs-winston-logger';
 import { Client, ClientKafka } from '@nestjs/microservices';
+import { GrabCampaignDto } from 'src/dtos/grab/grab-campaign.dto';
+import { QuotaDto } from 'src/dtos/grab/quota/quota.dto';
+import { ConditionDto } from 'src/dtos/grab/condition/condition.dto';
+import { DiscountDto } from 'src/dtos/grab/discount/discount.dto';
+import { PromotionGrabmartEntity } from 'src/entity/promotion_grabmart.entity';
 
 @Injectable()
 export class GenerateCampaignService {
@@ -42,4 +47,45 @@ export class GenerateCampaignService {
       inPutKafka,
     );
   }
+
+  async getGrabCampaign(entity: PromotionGrabmartEntity): Promise<GrabCampaignDto> {
+        // Simulate an asynchronous operation (like fetching data)
+        const fetchedQuotas: QuotaDto = await this.getQuotas();
+        const fetchedConditions: ConditionDto = await this.getConditions();
+        const fetchedDiscount: DiscountDto = await this.getDiscount();
+        
+        // Return the populated GrabCampaignDto
+        const campaignDto = new GrabCampaignDto();
+        campaignDto.id = entity.campaign_id;
+        campaignDto.createdBy = "user123";
+        campaignDto.merchantID = entity.merchant_id;
+        campaignDto.name = "Holiday Sale";
+        campaignDto.quotas = fetchedQuotas;
+        campaignDto.conditions = fetchedConditions;
+        campaignDto.discount = fetchedDiscount;
+        campaignDto.customTag = "holiday2024";
+
+        return campaignDto;
+    }
+
+    // These methods are mockups for simulating data fetching
+    private async getQuotas(): Promise<QuotaDto> {
+        return new Promise((resolve) => {
+            setTimeout(() => resolve(new QuotaDto()), 1000); // Simulate async data fetch
+        });
+    }
+
+    private async getConditions(): Promise<ConditionDto> {
+        return new Promise((resolve) => {
+            setTimeout(() => resolve(new ConditionDto()), 1000); // Simulate async data fetch
+        });
+    }
+
+    private async getDiscount(): Promise<DiscountDto> {
+        return new Promise((resolve) => {
+            setTimeout(() => resolve(new DiscountDto()), 1000); // Simulate async data fetch
+        });
+    }
+
+
 }

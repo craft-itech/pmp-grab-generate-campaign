@@ -1,4 +1,4 @@
-import { Condition } from "./condition/condition.dto"
+import { ConditionDto } from "./condition/condition.dto"
 import { DiscountDto } from "./discount/discount.dto"
 import { QuotaDto } from "./quota/quota.dto"
 
@@ -8,7 +8,7 @@ export class GrabCampaignDto{
     merchantID: string
     name: string
     quotas: QuotaDto
-    conditions: Condition
+    conditions: ConditionDto
     discount: DiscountDto
     customTag: string
 }
