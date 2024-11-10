@@ -13,6 +13,9 @@ import { SqsPublisherService } from 'src/service/sqs.service';
 import * as AWS from 'aws-sdk';
 import { SqsModule } from '@ssut/nestjs-sqs';
 import { toZonedTime } from 'date-fns-tz'
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { PromotionGrabmartEntity } from 'src/entity/promotion_grabmart.entity';
+import { TypeOrmConfigService } from 'src/typeorm/typeorm.service';
 
 AWS.config.update({
   region: process.env.awsRegion,
@@ -116,6 +119,8 @@ AWS.config.update({
       })
     ],
   }),
+  TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
+  TypeOrmModule.forFeature([PromotionGrabmartEntity]),
   ],
   controllers: [AppController],
   providers: [
