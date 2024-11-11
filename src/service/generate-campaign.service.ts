@@ -40,7 +40,7 @@ export class GenerateCampaignService {
 
     const url = process.env.ADAPTER_URL + "/campaign";
     const grabCampaign: GrabCampaignDto = await this.setGrabCampaign(promotion);
-    this.logger.debug("Create campaign : {}", grabCampaign);
+    this.logger.debug("Create campaign : " + grabCampaign);
     try {
       // Send POST request with grabCampaign as the body
       const response = await lastValueFrom(
@@ -151,7 +151,8 @@ export class GenerateCampaignService {
     return await this.promotionGrabmartRepository.find({
       where: { 
         merchant_id: merchantId,
-        bu: process.env.BU
+        bu: process.env.BU,
+        status: 0
       },
       order: {
         promotion_mode: 'ASC',
