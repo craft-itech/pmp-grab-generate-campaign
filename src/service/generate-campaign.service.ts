@@ -57,26 +57,31 @@ export class GenerateCampaignService {
     );
   }
 
-  async createCampaign(merchantID: string) {
+  async readCampaign(merchantID: string) {
     this.logger.debug("create merchantID : " + merchantID);
-    const promotions = await this.getPromotionsByMerchantId(merchantID);
-
-    const url = "http://localhost/merchantID/"+merchantID;
-
+    const promotions: PromotionGrabmartEntity[] = await this.getPromotionsByMerchantId(merchantID);
     for(const promotion of promotions) {
-        const grabCampaign: GrabCampaignDto = await this.setGrabCampaign(promotion);
-        try {
-          // Send POST request with grabCampaign as the body
-          const response = await lastValueFrom(
-            this.httpService.post(url, grabCampaign)
-          );
-          this.logger.debug("Successfully posted campaign for merchant ID: " + merchantID);
-        } catch (error) {
-          this.logger.error("Failed to post campaign for merchant ID: " + merchantID);
-        }
-    }    
-    
-    
+      if(promotion.promotion_mode == "INSERT") {
+        await this.createCampaign(promotion, merchantID);
+      } else {
+        await this.deleteCampaign(merchantID);
+      }
+    }
+  }
+
+  async createCampaign(promotion: PromotionGrabmartEntity, merchantID: string) {
+
+    const url = "http://localhost/merchantID/";
+    const grabCampaign: GrabCampaignDto = await this.setGrabCampaign(promotion);
+    try {
+      // Send POST request with grabCampaign as the body
+      const response = await lastValueFrom(
+        this.httpService.post(url, grabCampaign)
+      );
+      this.logger.debug("Successfully posted campaign for merchant ID: " + merchantID);
+    } catch (error) {
+      this.logger.error("Failed to post campaign for merchant ID: " + merchantID);
+    }  
   }
 
   async deleteCampaign(merchantID: string) {
