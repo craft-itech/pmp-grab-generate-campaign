@@ -37,7 +37,7 @@ export class UtilService {
     // Check if input date is before the current date
     if (isBefore(parsedInputDate, currentDate)) {
       // Add 1 hour and 5 minutes to current date if input date is in the past
-      const adjustedDate = addMinutes(currentDate, 5);
+      const adjustedDate = addMinutes(addHours(currentDate, 1), 5);
 
       console.log("adjust date");
       console.log(adjustedDate);
