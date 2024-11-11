@@ -46,22 +46,22 @@ import { WinstonModule } from 'nest-winston';
       }),      
     ),
     transports: [
-      new transports.Console({level: process.env.transportsLevelConsole}),
+      new transports.Console({ level: process.env.LOG_LEVEL }),
       winstonAzureBlob({
         account: {
-          name: process.env.transportsAccountName,
-          key: process.env.transportsAccountKey
+          name: process.env.AZURE_LOG_ACCOUNT_NAME,
+          key: process.env.AZURE_LOG_ACCOUNT_KEY,
         },
         containerName: 'pmplogs',
-        blobName: process.env.transportsBlobName,
-        level: process.env.transportsLevelBlob,
-        bufferLogSize : 1,
-        syncTimeout : 0,
-        rotatePeriod : 'YYYY-MM-DD-HH',
-        eol : '\n'
-      })
+        blobName: process.env.AZURE_LOG_BLOB_NAME,
+        level: process.env.LOG_LEVEL,
+        bufferLogSize: 1,
+        syncTimeout: 0,
+        rotatePeriod: 'YYYY-MM-DD-HH',
+        eol: '\n',
+      }),
     ],
-  }),
+}),
   TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
   TypeOrmModule.forFeature([PromotionGrabmartEntity]),
   ],
