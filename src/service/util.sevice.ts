@@ -39,15 +39,9 @@ export class UtilService {
       // Add 1 hour and 5 minutes to current date if input date is in the past
       const adjustedDate = addMinutes(addHours(currentDate, 1), 5);
 
-      console.log("adjust date");
-      console.log(adjustedDate);
-
       return format(adjustedDate, outputFormat);
     }
 
-  
-    console.log("parse date");
-    console.log(parsedInputDate);
 // If input date is not before current date, return it as is in the desired format
     return format(parsedInputDate, outputFormat);
   }
