@@ -14,6 +14,6 @@ export class AppController {
 
   @Post('trigger')
   createProduct(@Body() merchantId: string){
-    return this.genCampaignService.readCampaign(merchantId.toString());
+    return this.genCampaignService.readCampaign('GFSBPOS-223-168');
   }
 }
