@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { format, parse } from 'date-fns';
+import { format, parse, isBefore, addHours, addMinutes } from 'date-fns';
 
 @Injectable()
 export class UtilService {
@@ -23,5 +23,25 @@ export class UtilService {
   convertDateFormat(dateStr: string, inputFormat: string, outputFormat: string): string {
     const parsedDate = parse(dateStr, inputFormat, new Date());
     return format(parsedDate, outputFormat);
+  }
+
+  checkAndAdjustDate(
+    dateStr: string,
+    inputFormat: string,
+    outputFormat: string
+  ): string {
+    // Parse the input date
+    const parsedInputDate = parse(dateStr, inputFormat, new Date());
+    const currentDate = new Date();
+
+    // Check if input date is before the current date
+    if (isBefore(parsedInputDate, currentDate)) {
+      // Add 1 hour and 5 minutes to current date if input date is in the past
+      const adjustedDate = addMinutes(addHours(currentDate, 1), 5);
+      return format(adjustedDate, outputFormat);
+    }
+
+    // If input date is not before current date, return it as is in the desired format
+    return format(parsedInputDate, outputFormat);
   }
 }

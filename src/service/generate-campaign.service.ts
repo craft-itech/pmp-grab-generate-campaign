@@ -94,7 +94,7 @@ export class GenerateCampaignService {
 
     const conditions: ConditionDto = new ConditionDto;
 
-    conditions.startTime = this.utilService.convertDateFormat(strStartDate, inputDateFormat, grabDateFormat);
+    conditions.startTime = this.utilService.checkAndAdjustDate(strStartDate, inputDateFormat, grabDateFormat);
     conditions.endTime = this.utilService.convertDateFormat(strEndDate, inputDateFormat, grabDateFormat);
     conditions.eaterType = 'all';
     if (entity.bundle_qty)
