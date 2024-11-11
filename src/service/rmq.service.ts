@@ -16,6 +16,7 @@ export class RmqService {
         createQueueIfNotExists: false,
     })
     public async pubSubHandlerCampaign(payload: string) {
+        console.log("----------------");
         this.logger.debug(`Received Campaign pub/sub message: `);
         this.logger.debug(payload);
 
