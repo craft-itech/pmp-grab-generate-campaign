@@ -1,7 +1,6 @@
 import { RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
-import { Injectable } from "@nestjs/common";
-import { InjectLogger, NestjsWinstonLoggerService } from "nestjs-winston-logger";
-import { InPutKafka } from "src/dtos/inputkafka";
+import { Inject, Injectable, LoggerService } from "@nestjs/common";
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { InPutKafkaAny } from "src/dtos/inptukafkaany";
 import { GenerateCampaignService } from "./generate-campaign.service";
 
@@ -9,7 +8,7 @@ import { GenerateCampaignService } from "./generate-campaign.service";
 export class RmqService {
     constructor(
         private readonly genCampaignService: GenerateCampaignService,
-        @InjectLogger(RmqService.name) private logger: NestjsWinstonLoggerService
+        @Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: LoggerService,
     ) {
     }
 
@@ -17,12 +16,12 @@ export class RmqService {
         queue: '', //queue name
         createQueueIfNotExists: false,
     })
-    public async pubSubHandlerCampaign(payload: InPutKafkaAny) {
+    public async pubSubHandlerCampaign(payload: string) {
         this.logger.debug(`Received Campaign pub/sub message: `);
-        this.logger.debug(JSON.stringify(payload))
+        this.logger.debug(payload);
 
         try {
-            await this.genCampaignService.crateCampaign(payload)
+            await this.genCampaignService.readCampaign(payload)
         }
         catch (error) {
             this.logger.error('Error msg :' + error);

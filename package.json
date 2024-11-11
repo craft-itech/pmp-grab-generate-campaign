@@ -23,26 +23,21 @@
   "dependencies": {
     "@golevelup/nestjs-rabbitmq": "^2.4.1",
     "@nestjs/axios": "^3.1.2",
-    "@nestjs/common": "^8.0.0",
     "@nestjs/config": "^2.0.0",
-    "@nestjs/core": "^8.0.0",
     "@nestjs/microservices": "^8.4.7",
-    "@nestjs/platform-express": "^8.0.0",
-    "@nestjs/swagger": "^5.2.0",
-    "@rob3000/nestjs-kafka": "^1.6.0",
-    "@ssut/nestjs-sqs": "^1.3.0",
-    "aws-sdk": "^2.1201.0",
-    "date-fns": "^3.6.0",
-    "date-fns-tz": "^3.1.3",
-    "kafkajs": "^1.16.0",
-    "nestjs-winston-logger": "^1.1.11",
-    "reflect-metadata": "^0.1.13",
-    "rimraf": "^3.0.2",
-    "rxjs": "^7.2.0",
-    "swagger-ui-express": "^4.3.0",
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/typeorm": "^10.0.2",
+    "date-fns-tz": "^3.2.0",
+    "mssql": "^11.0.1",
+    "nest-winston": "^1.9.7",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.1",
     "typeorm": "^0.3.20",
-    "winston": "^3.17.0",
-    "winston-azure-blob": "^1.2.0"
+    "uuid": "^11.0.2",
+    "winston": "^3.16.0",
+    "winston-azure-blob": "^1.5.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",
@@ -83,5 +78,6 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
-  }
+  },
+  "packageManager": "pnpm@9.12.3+sha512.cce0f9de9c5a7c95bef944169cc5dfe8741abfb145078c0d508b868056848a87c81e626246cb60967cbd7fd29a6c062ef73ff840d96b3c86c40ac92cf4a813ee"
 }
