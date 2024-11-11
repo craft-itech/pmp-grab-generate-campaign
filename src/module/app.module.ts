@@ -22,7 +22,7 @@ import { HttpModule } from '@nestjs/axios';
 
   HttpModule.register({
     timeout: 3000,
-}),
+  }),
                
   WinstonModule.forRoot({
     format: format.combine(

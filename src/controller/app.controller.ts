@@ -14,6 +14,6 @@ export class AppController {
 
   @Post('trigger')
   createProduct(@Body() merchantId: string){
-    return this.genCampaignService.readCampaign(merchantId);
+    return this.genCampaignService.readCampaign(JSON.stringify(merchantId));
   }
 }
