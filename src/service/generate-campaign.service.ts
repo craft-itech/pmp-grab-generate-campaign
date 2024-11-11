@@ -40,6 +40,7 @@ export class GenerateCampaignService {
 
     const url = process.env.ADAPTER_URL + "/campaign";
     const grabCampaign: GrabCampaignDto = await this.setGrabCampaign(promotion);
+    this.logger.debug("Create campaign : {}", grabCampaign);
     try {
       // Send POST request with grabCampaign as the body
       const response = await lastValueFrom(
@@ -106,7 +107,7 @@ export class GenerateCampaignService {
 
   private async getConditions(entity: PromotionGrabmartEntity): Promise<ConditionDto> {
     const inputDateFormat: string = 'yyyy-MM-dd HH:mm:ss';
-    const grabDateFormat: string  = "yyyy-MM-dd'T'HH:mm:ss";
+    const grabDateFormat: string  = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     const strStartDate = entity.start_date + " 00:00:00"
     const strEndDate = entity.end_date + " 23:59:59"
 

@@ -12,10 +12,12 @@ export class RmqService {
     }
 
     @RabbitSubscribe({
-        queue: "cg.pmp.campaign.grabmart.init.q", //queue name
+        exchange: "cg.pmp.campaign.dx",
+        routingKey: "00.10.06.12.01.00",
+        queue: "cg.pmp.campaign.grabmart.init.q",
         createQueueIfNotExists: false,
     })
-    public async pubSubHandlerCampaign(payload: string) {
+    public async pubSubHandlerCampaign(payload) {
         console.log("----------------");
         this.logger.debug(`Received Campaign pub/sub message: `);
         this.logger.debug(payload);
