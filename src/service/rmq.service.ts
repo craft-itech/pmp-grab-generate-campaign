@@ -12,7 +12,7 @@ export class RmqService {
     }
 
     @RabbitSubscribe({
-        queue: process.env.CAMPAIGN_QUEUE, //queue name
+        queue: "cg.pmp.campaign.grabmart.init.q", //queue name
         createQueueIfNotExists: false,
     })
     public async pubSubHandlerCampaign(payload: string) {
