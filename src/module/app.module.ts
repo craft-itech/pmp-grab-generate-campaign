@@ -2,7 +2,6 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { Module } from '@nestjs/common';
 import { RmqService } from 'src/service/rmq.service';
 import { AppController } from '../controller/app.controller';
-import { AppService } from '../service/app.service';
 import { format, transports } from "winston";
 import { winstonAzureBlob } from 'winston-azure-blob';
 import { ConfigModule } from '@nestjs/config';
@@ -68,7 +67,6 @@ import { WinstonModule } from 'nest-winston';
   ],
   controllers: [AppController],
   providers: [
-    AppService, 
     RmqService, 
     UtilService, 
     GenerateCampaignService],
