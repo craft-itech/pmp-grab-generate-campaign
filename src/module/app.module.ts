@@ -16,7 +16,7 @@ import { WinstonModule } from 'nest-winston';
 @Module({
   imports: [ConfigModule.forRoot(),
   RabbitMQModule.forRoot(RabbitMQModule, {
-    uri: process.env.uri,
+    uri: process.env.RMQ_URI,
   }),
                
   WinstonModule.forRoot({
