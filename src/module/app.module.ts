@@ -16,6 +16,7 @@ import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [ConfigModule.forRoot(),
+    
   RabbitMQModule.forRoot(RabbitMQModule, {
     uri: process.env.RMQ_URI,
   }),

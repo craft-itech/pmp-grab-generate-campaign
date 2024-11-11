@@ -1,7 +1,7 @@
-import { RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
 import { Inject, Injectable, LoggerService } from "@nestjs/common";
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { GenerateCampaignService } from "./generate-campaign.service";
+import { RabbitSubscribe } from "@golevelup/nestjs-rabbitmq";
 
 @Injectable()
 export class RmqService {
