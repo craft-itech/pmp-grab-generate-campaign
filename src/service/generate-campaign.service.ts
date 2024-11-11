@@ -62,10 +62,6 @@ export class GenerateCampaignService {
       }
     } catch (error) {
       this.logger.error("Failed to post campaign for merchant ID: " + merchantID, error);
-      throw new HttpException(
-        'Failed to delete merchant from external API',
-        error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
     }  
   }
 
@@ -79,10 +75,7 @@ export class GenerateCampaignService {
         throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (error) {
-      throw new HttpException(
-        'Failed to delete merchant from external API',
-        error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      this.logger.error("Failed to delete campaign for campaign ID: " + promotion.campaign_id, error);
     }
   }
 
