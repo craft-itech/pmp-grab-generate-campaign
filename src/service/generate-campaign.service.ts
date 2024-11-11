@@ -40,7 +40,7 @@ export class GenerateCampaignService {
 
     const url = process.env.ADAPTER_URL + "/campaign";
     const grabCampaign: GrabCampaignDto = await this.setGrabCampaign(promotion);
-    this.logger.debug("Create campaign : " + grabCampaign);
+    this.logger.debug("Create campaign : " + JSON.stringify(grabCampaign));
     try {
       // Send POST request with grabCampaign as the body
       const response = await lastValueFrom(
