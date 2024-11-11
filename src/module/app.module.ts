@@ -12,12 +12,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PromotionGrabmartEntity } from 'src/entity/promotion_grabmart.entity';
 import { TypeOrmConfigService } from 'src/typeorm/typeorm.service';
 import { WinstonModule } from 'nest-winston';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [ConfigModule.forRoot(),
   RabbitMQModule.forRoot(RabbitMQModule, {
     uri: process.env.RMQ_URI,
   }),
+
+  HttpModule.register({
+    timeout: 3000,
+}),
                
   WinstonModule.forRoot({
     format: format.combine(
