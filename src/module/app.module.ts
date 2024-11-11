@@ -1,6 +1,5 @@
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { Module } from '@nestjs/common';
-import { NestjsWinstonLoggerModule } from 'nestjs-winston-logger';
 import { RmqService } from 'src/service/rmq.service';
 import { AppController } from '../controller/app.controller';
 import { AppService } from '../service/app.service';
@@ -9,74 +8,19 @@ import { winstonAzureBlob } from 'winston-azure-blob';
 import { ConfigModule } from '@nestjs/config';
 import { UtilService } from 'src/service/util.sevice'
 import { GenerateCampaignService } from 'src/service/generate-campaign.service';
-import { SqsPublisherService } from 'src/service/sqs.service';
-import * as AWS from 'aws-sdk';
-import { SqsModule } from '@ssut/nestjs-sqs';
 import { toZonedTime } from 'date-fns-tz'
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PromotionGrabmartEntity } from 'src/entity/promotion_grabmart.entity';
 import { TypeOrmConfigService } from 'src/typeorm/typeorm.service';
-
-AWS.config.update({
-  region: process.env.awsRegion,
-  accessKeyId: process.env.awsAccessKey,
-  secretAccessKey: process.env.awsSecretKey,
-});
+import { WinstonModule } from 'nest-winston';
 
 @Module({
   imports: [ConfigModule.forRoot(),
   RabbitMQModule.forRoot(RabbitMQModule, {
     uri: process.env.uri,
   }),
-       
-  SqsModule.register(
-    {
-      consumers: [],
-      producers: [
-        {
-          name: process.env.price_queue,
-          queueUrl: process.env.sqsQueueUrl + process.env.price_queue, 
-          region: process.env.sqsRegion,
-        },
-        {
-          name: process.env.coupon_queue,
-          queueUrl: process.env.sqsQueueUrl + process.env.coupon_queue, 
-          region: process.env.sqsRegion,
-        },
-        {
-          name: process.env.promotion_queue,
-          queueUrl: process.env.sqsQueueUrl + process.env.promotion_queue, 
-          region: process.env.sqsRegion,
-        },
-        {
-          name: process.env.cancel_promotion_queue,
-          queueUrl: process.env.sqsQueueUrl + process.env.cancel_promotion_queue, 
-          region: process.env.sqsRegion,
-        },
-        {
-          name: process.env.image_queue,
-          queueUrl: process.env.sqsQueueUrl + process.env.image_queue, 
-          region: process.env.sqsRegion,
-        },
-        {
-          name: process.env.product_queue,
-          queueUrl: process.env.sqsQueueUrl + process.env.product_queue, 
-          region: process.env.sqsRegion,
-        },
-        {
-          name: process.env.loc_queue,
-          queueUrl: process.env.sqsQueueUrl + process.env.loc_queue, 
-          region: process.env.sqsRegion,
-        },
-        {
-          name: process.env.campaign_queue,
-          queueUrl: process.env.sqsQueueUrl + process.env.campaign_queue, 
-          region: process.env.sqsRegion,
-        },
-      ]
-    }),
-        
-  NestjsWinstonLoggerModule.forRoot({
+               
+  WinstonModule.forRoot({
     format: format.combine(
       format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }), // Customize timestamp format
       format.printf(info => {
@@ -126,7 +70,6 @@ AWS.config.update({
   providers: [
     AppService, 
     RmqService, 
-    SqsPublisherService,
     UtilService, 
     GenerateCampaignService],
 })

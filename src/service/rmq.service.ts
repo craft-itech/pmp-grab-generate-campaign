@@ -13,7 +13,7 @@ export class RmqService {
     }
 
     @RabbitSubscribe({
-        queue: '', //queue name
+        queue: process.env.CAMPAIGN_QUEUE, //queue name
         createQueueIfNotExists: false,
     })
     public async pubSubHandlerCampaign(payload: string) {

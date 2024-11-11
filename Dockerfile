@@ -1,32 +1,25 @@
-# build
-FROM node:17-alpine3.14 AS builder
+FROM node:20-alpine3.19 AS base
 
-ENV NODE_ENV=build
+RUN npm i -g pnpm
 
-USER node
-WORKDIR /home/node
+FROM base AS dependencies
 
-COPY --chown=node:node . .
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
 
-RUN yarn install
-RUN yarn run build
+FROM base AS build
 
-#
-FROM node:17-alpine3.14
+WORKDIR /app
+COPY . .
+COPY --from=dependencies /app/node_modules ./node_modules
+RUN pnpm build
 
-ENV NODE_ENV=production
-ENV HOME=/home/node/app
+FROM base AS deploy
 
-USER node
-RUN mkdir -p $HOME
-WORKDIR $HOME
+WORKDIR /app
+COPY --from=build /app/dist/ ./dist/
+COPY --from=build /app/node_modules ./node_modules
 
-COPY --from=builder /home/node/package.json .
-COPY --from=builder /home/node/.production.env .
-COPY --from=builder /home/node/tsconfig.build.json .
-COPY --from=builder /home/node/node_modules/ ./node_modules
-COPY --from=builder /home/node/dist/ ./dist
 
-EXPOSE 3000
-
-CMD ["yarn", "run", "start"]
+CMD [ "node", "dist/main.js" ]

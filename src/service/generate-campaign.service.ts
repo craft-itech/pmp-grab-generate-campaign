@@ -1,15 +1,17 @@
 import { Injectable, HttpException, HttpStatus, Inject, LoggerService } from '@nestjs/common';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { GrabCampaignDto } from 'src/dtos/grab/grab-campaign.dto';
 import { QuotaDto } from 'src/dtos/grab/quota/quota.dto';
 import { ConditionDto } from 'src/dtos/grab/condition/condition.dto';
-import { DiscountDto, DiscountDto } from 'src/dtos/grab/discount/discount.dto';
+import { DiscountDto } from 'src/dtos/grab/discount/discount.dto';
 import { PromotionGrabmartEntity } from 'src/entity/promotion_grabmart.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { UtilService } from './util.sevice';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { ScopeDto } from 'src/dtos/grab/discount/scope.dto';
+import { lastValueFrom } from 'rxjs';
+import { GrabCampaignResposneDto } from 'src/dtos/grab/grab-campaign-response.dto';
 
 @Injectable()
 export class GenerateCampaignService {
@@ -29,29 +31,46 @@ export class GenerateCampaignService {
       if(promotion.promotion_mode == "INSERT") {
         this.createCampaign(promotion, merchantID);
       } else {
-        this.deleteCampaign(promotion.campaign_id, merchantID);
+        this.deleteCampaign(promotion, merchantID);
       }
     }
   }
 
   async createCampaign(promotion: PromotionGrabmartEntity, merchantID: string) {
 
-    const url = "http://localhost/merchantID/";
+    const url = process.env.ADAPTER_URL + "/campaign";
     const grabCampaign: GrabCampaignDto = await this.setGrabCampaign(promotion);
     try {
       // Send POST request with grabCampaign as the body
       const response = await lastValueFrom(
-        this.httpService.post(url, grabCampaign)
+        this.httpService.post<GrabCampaignResposneDto>(url, grabCampaign)
       );
-      this.logger.debug("Successfully posted campaign for merchant ID: " + merchantID);
+
+
+      if (response.status === 200) {
+        promotion.campaign_id = response.data.campaignID;
+        promotion.status = 99;
+  
+        this.promotionGrabmartRepository.save(promotion);
+  
+        this.logger.debug("Successfully posted campaign for merchant ID: " + merchantID + " get campaign id: " + promotion.campaign_id);
+      }
+      else {
+        this.logger.error("Failed to post campaign for merchant ID: " + merchantID + " response code: " + response.status);
+        throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
     } catch (error) {
-      this.logger.error("Failed to post campaign for merchant ID: " + merchantID);
+      this.logger.error("Failed to post campaign for merchant ID: " + merchantID, error);
+      throw new HttpException(
+        'Failed to delete merchant from external API',
+        error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }  
   }
 
-  async deleteCampaign(campaignID: string, merchantID: string) {
-    this.logger.debug("Delete merchantID : " + merchantID + "|" + campaignID);
-    const url = "http://localhost/campaignID/"+campaignID;
+  async deleteCampaign(promotion: PromotionGrabmartEntity, merchantID: string) {
+    this.logger.debug("Delete merchantID : " + merchantID + " campaign id:" + promotion.campaign_id);
+    const url = process.env.ADAPTER_URL + "/campaign/"+promotion.campaign_id;
     
     try {
       const response = await lastValueFrom(this.httpService.delete(url));
@@ -68,9 +87,8 @@ export class GenerateCampaignService {
 
   async setGrabCampaign(entity: PromotionGrabmartEntity): Promise<GrabCampaignDto> {
     // Simulate an asynchronous operation (like fetching data)
-    const fetchedQuotas: QuotaDto = await this.getQuotas(entity);
     const fetchedConditions: ConditionDto = await this.getConditions(entity);
-    const fetchedDiscount: DiscountDto = await this.getDiscount();
+    const fetchedDiscount: DiscountDto = await this.getDiscount(entity);
     
     // Return the populated GrabCampaignDto
     const campaignDto = new GrabCampaignDto();
@@ -94,7 +112,7 @@ export class GenerateCampaignService {
 
     const conditions: ConditionDto = new ConditionDto;
 
-    conditions.startTime = this.utilService.convertDateFormat(strStartDate, inputDateFormat, grabDateFormat);
+    conditions.startTime = this.utilService.checkAndAdjustDate(strStartDate, inputDateFormat, grabDateFormat);
     conditions.endTime = this.utilService.convertDateFormat(strEndDate, inputDateFormat, grabDateFormat);
     conditions.eaterType = 'all';
     if (entity.bundle_qty)
@@ -109,17 +127,31 @@ export class GenerateCampaignService {
     return quota;
   }
 
-  private async getDiscount(): Promise<DiscountDto> {
+  private async getDiscount(entity: PromotionGrabmartEntity): Promise<DiscountDto> {
     const discount: DiscountDto = new DiscountDto();
 
-    
+    discount.type = entity.grab_promotion_type;
+    discount.value = parseInt(entity.campaign_value);
+    discount.scope = await this.getScope(entity);
 
     return discount;
   }
 
+  private async getScope(entity: PromotionGrabmartEntity): Promise<ScopeDto> {
+    const scope: ScopeDto = new ScopeDto();
+
+    scope.type = "items";
+    scope.objectIDs = entity.barcode.split(',');
+
+    return scope;
+  }
+
   async getPromotionsByMerchantId(merchantId: string): Promise<PromotionGrabmartEntity[]> {
     return await this.promotionGrabmartRepository.find({
-      where: { merchant_id: merchantId },
+      where: { 
+        merchant_id: merchantId,
+        bu: process.env.BU
+      },
       order: {
         promotion_mode: 'ASC',
         created_date: 'ASC',
