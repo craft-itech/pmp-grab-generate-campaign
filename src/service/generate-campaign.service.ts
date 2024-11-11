@@ -64,7 +64,7 @@ export class GenerateCampaignService {
       if(promotion.promotion_mode == "INSERT") {
         await this.createCampaign(promotion, merchantID);
       } else {
-        await this.deleteCampaign(merchantID);
+        await this.deleteCampaign(promotion.campaign_id, merchantID);
       }
     }
   }
@@ -84,9 +84,9 @@ export class GenerateCampaignService {
     }  
   }
 
-  async deleteCampaign(merchantID: string) {
-    this.logger.debug("Delete merchantID : " + merchantID);
-    const url = "http://localhost/merchantID/"+merchantID;
+  async deleteCampaign(campaignID: string, merchantID: string) {
+    this.logger.debug("Delete merchantID : " + merchantID + "|" + campaignID);
+    const url = "http://localhost/campaignID/"+campaignID;
     
     try {
       const response = await lastValueFrom(this.httpService.delete(url));
