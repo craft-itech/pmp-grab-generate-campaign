@@ -15,14 +15,14 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Get('adapter/topsonline/product/attribute')
-  getAttribute(
-    @Query('categoryID') categoryID?: string,
-    @Query('lang') lang?: string,
-  ):
-   Promise<AttributeResponse> {
-    return this.genCampaignService.getAttribute(categoryID, lang);
-  }
+  // @Get('adapter/topsonline/product/attribute')
+  // getAttribute(
+  //   @Query('categoryID') categoryID?: string,
+  //   @Query('lang') lang?: string,
+  // ):
+  //  Promise<AttributeResponse> {
+  //   return this.genCampaignService.getAttribute(categoryID, lang);
+  // }
 
   @Get('adapter/topsonline/health')
   getHealth(): string {
@@ -31,11 +31,6 @@ export class AppController {
 
   @Post('adapter/topsonline/product')
   createProduct(@Body() inPutKafka: InPutKafka){
-    return this.genCampaignService.crateProduct(inPutKafka);
-  }
-
-  @Post('adapter/topsonline/price')
-  createPrice(@Body() inPutKafka: InPutKafka){
-    return this.genCampaignService.cratePrice(inPutKafka);
+    return this.genCampaignService.crateCampaign(inPutKafka);
   }
 }
