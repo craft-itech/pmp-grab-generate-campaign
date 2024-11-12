@@ -19,6 +19,12 @@ import { HttpModule } from '@nestjs/axios';
     
   RabbitMQModule.forRoot(RabbitMQModule, {
     uri: process.env.RMQ_URI,
+    channels: {
+      "channel-1": {
+        prefetchCount: 1,
+        default: true,
+      },
+    },
   }),
 
   HttpModule.register({
