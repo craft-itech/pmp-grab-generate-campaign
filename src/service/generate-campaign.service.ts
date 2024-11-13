@@ -16,9 +16,11 @@ import { Period } from 'src/dtos/grab/condition/period.dto';
 import { Day } from 'src/dtos/grab/condition/day.dto';
 import { WorkingHour } from 'src/dtos/grab/condition/workinghour.dto';
 import { MasterGrabmartEntity } from 'src/entity/master_grabmart.entity';
+import { parse } from 'date-fns';
 
 @Injectable()
 export class GenerateCampaignService {
+  private debounceTimeout;
   constructor(
     @InjectRepository(PromotionGrabmartEntity) 
     private readonly promotionGrabmartRepository: Repository<PromotionGrabmartEntity>,
@@ -28,8 +30,12 @@ export class GenerateCampaignService {
     private readonly httpService: HttpService,
     private readonly utilService: UtilService,
   ) {
-    setInterval(this.checkCampaign.bind(this), 60000);
-  }
+    this.debounceTimeout = null;
+
+    setInterval(() => {
+      clearTimeout(this.debounceTimeout);
+      this.debounceTimeout = setTimeout(this.checkCampaign.bind(this), 60000);
+    }, 60000);  }
 
 
   async checkCampaign() {
@@ -98,29 +104,38 @@ export class GenerateCampaignService {
 
     const url = process.env.ADAPTER_URL + "/campaign";
     const grabCampaign: GrabCampaignDto = await this.setGrabCampaign(promotion);
-    this.logger.debug("Create campaign : " + JSON.stringify(grabCampaign));
-    try {
-      // Send POST request with grabCampaign as the body
-      const response = await lastValueFrom(
-        this.httpService.post<GrabCampaignResposneDto>(url, grabCampaign)
-      );
 
-
-      if (response.status === 200) {
-        promotion.campaign_id = response.data.campaignID;
-        promotion.status = 99;
+    if (parse(grabCampaign.conditions.endTime, "yyyy-MM-dd'T'HH:mm:ss'Z'", new Date()).getTime() > new Date().getTime()) {
+      this.logger.debug("Create campaign : " + JSON.stringify(grabCampaign));
+      try {
+        // Send POST request with grabCampaign as the body
+        const response = await lastValueFrom(
+          this.httpService.post<GrabCampaignResposneDto>(url, grabCampaign)
+        );
   
-        this.promotionGrabmartRepository.save(promotion);
   
-        this.logger.debug("Successfully posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
-      }
-      else {
-        this.logger.error("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + " response code: " + response.status);
-        throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-    } catch (error) {
-      this.logger.error("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id, error);
-    }  
+        if (response.status === 200) {
+          promotion.campaign_id = response.data.campaignID;
+          promotion.status = 99;
+    
+          this.promotionGrabmartRepository.save(promotion);
+    
+          this.logger.debug("Successfully posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
+        }
+        else {
+          this.logger.error("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + " response code: " + response.status);
+          throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+      } catch (error) {
+        this.logger.error("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id, error);
+      }  
+    }
+    else {
+      this.logger.warn("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + ' because end date already pass.');
+      promotion.status = 103;
+    
+      this.promotionGrabmartRepository.save(promotion);
+}
   }
 
   async deleteCampaign(promotion: PromotionGrabmartEntity, merchantID: string) {
@@ -147,7 +162,7 @@ export class GenerateCampaignService {
     campaignDto.id = entity.campaign_id;
     //campaignDto.createdBy = "PMP";
     campaignDto.merchantID = entity.merchant_id;
-    campaignDto.name = entity.custom_tag;
+    campaignDto.name = entity.promotion_type;
     //campaignDto.quotas = fetchedQuotas;
     campaignDto.conditions = fetchedConditions;
     campaignDto.discount = fetchedDiscount;
@@ -161,7 +176,7 @@ export class GenerateCampaignService {
 
   private async getConditions(entity: PromotionGrabmartEntity): Promise<ConditionDto> {
     const inputDateFormat: string = 'yyyy-MM-dd HH:mm:ss';
-    const grabDateFormat: string  = "yyyy-MM-dd'T'HH:mm:ss";
+    const grabDateFormat: string  = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     const strStartDate = entity.start_date + " 00:00:00"
     const strEndDate = entity.end_date + " 23:59:59"
 
@@ -183,8 +198,8 @@ export class GenerateCampaignService {
     workingHour.fri = day;
     workingHour.sat = day;
 
-    conditions.startTime = this.utilService.checkAndAdjustDate(strStartDate, inputDateFormat, grabDateFormat) + 'Z';
-    conditions.endTime = this.utilService.convertDateFormat(strEndDate, inputDateFormat, grabDateFormat) + 'Z';
+    conditions.startTime = this.utilService.checkAndAdjustDate(strStartDate, inputDateFormat, grabDateFormat);
+    conditions.endTime = this.utilService.convertDateFormat(strEndDate, inputDateFormat, grabDateFormat);
     conditions.eaterType = 'all';
     if (entity.bundle_qty)
     conditions.bundleQuantity = entity.bundle_qty ? parseInt(entity.bundle_qty) : 0;
