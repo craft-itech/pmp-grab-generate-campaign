@@ -35,6 +35,7 @@ export class GenerateCampaignService {
   async checkCampaign() {
     const promotions = await this.promotionGrabmartRepository.find({
       where: { 
+        bu: process.env.BU,
         status: 0
       },
       order: {
