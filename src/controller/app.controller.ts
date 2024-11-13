@@ -14,6 +14,11 @@ export class AppController {
 
   @Post('trigger/:seller')
   createProduct(@Param('seller') merchantId){
-    return this.genCampaignService.readCampaign(merchantId);
+    try {
+      return this.genCampaignService.readCampaign(merchantId);
+    }
+    catch (error) {
+      return error;
+    }
   }
 }
