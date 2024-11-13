@@ -96,7 +96,10 @@ export class GenerateCampaignService {
     //campaignDto.quotas = fetchedQuotas;
     campaignDto.conditions = fetchedConditions;
     campaignDto.discount = fetchedDiscount;
-    campaignDto.customTag = entity.custom_tag;
+
+    if (entity.grab_promotion_type.startsWith('bundle')) {
+      campaignDto.customTag = entity.custom_tag;
+    }
 
     return campaignDto;
   }
@@ -126,6 +129,7 @@ export class GenerateCampaignService {
     workingHour.sat = day;
 
     conditions.startTime = this.utilService.checkAndAdjustDate(strStartDate, inputDateFormat, grabDateFormat) + 'Z';
+    this.logger.debug("Promotion end date : " + strEndDate)
     conditions.endTime = this.utilService.convertDateFormat(strEndDate, inputDateFormat, grabDateFormat) + 'Z';
     conditions.eaterType = 'all';
     if (entity.bundle_qty)
