@@ -56,6 +56,13 @@ export class GenerateCampaignService {
       if (promotion.promotion_mode === 'CANCEL') {
         this.processCampaign(promotion);
       }
+      else if (parse(promotion.end_date + " 23:59:59", "yyyy-MM-dd HH:mm:ss", new Date()).getTime() > new Date().getTime()) {
+        promotion.status = 103;
+        promotion.updated_date = new Date();
+
+        this.promotionGrabmartRepository.save(promotion);
+        this.logger.warn("Failed to post campaign for merchant ID: " + promotion.merchant_id + ' of ID ' + promotion.id + ' because end date already pass.');
+      }
       else {
         const barcodes = promotion.barcode.split(',');
 
@@ -117,6 +124,7 @@ export class GenerateCampaignService {
         if (response.status === 200) {
           promotion.campaign_id = response.data.campaignID;
           promotion.status = 99;
+          promotion.updated_date = new Date();
     
           this.promotionGrabmartRepository.save(promotion);
     
@@ -133,6 +141,7 @@ export class GenerateCampaignService {
     else {
       this.logger.warn("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + ' because end date already pass.');
       promotion.status = 103;
+      promotion.updated_date = new Date();
     
       this.promotionGrabmartRepository.save(promotion);
 }
