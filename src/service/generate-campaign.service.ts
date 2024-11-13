@@ -56,7 +56,7 @@ export class GenerateCampaignService {
       if (promotion.promotion_mode === 'CANCEL') {
         this.processCampaign(promotion);
       }
-      else if (parse(promotion.end_date + " 23:59:59", "yyyy-MM-dd HH:mm:ss", new Date()).getTime() <= new Date().getTime()) {
+      else if (parse(promotion.end_date + " 23:59:59", "yyyy-MM-dd HH:mm:ss", new Date()).getTime(), new Date().getTime()) {
         promotion.status = 103;
         promotion.updated_date = new Date();
 
@@ -207,8 +207,8 @@ export class GenerateCampaignService {
     workingHour.fri = day;
     workingHour.sat = day;
 
-    conditions.startTime = this.utilService.checkAndAdjustDate(strStartDate, inputDateFormat, grabDateFormat);
-    conditions.endTime = this.utilService.convertDateFormat(strEndDate, inputDateFormat, grabDateFormat);
+    conditions.startTime = this.utilService.checkAndAdjustDate(strStartDate, inputDateFormat, grabDateFormat, parseInt(process.env.ADJUST_TZ));
+    conditions.endTime = this.utilService.convertDateFormat(strEndDate, inputDateFormat, grabDateFormat, parseInt(process.env.ADJUST_TZ));
     conditions.eaterType = 'all';
     if (entity.bundle_qty)
     conditions.bundleQuantity = entity.bundle_qty ? parseInt(entity.bundle_qty) : 0;

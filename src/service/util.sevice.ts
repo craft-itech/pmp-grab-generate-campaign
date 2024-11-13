@@ -20,15 +20,16 @@ export class UtilService {
    * @param outputFormat - The desired format of the output date string.
    * @returns The formatted date string.
    */
-  convertDateFormat(dateStr: string, inputFormat: string, outputFormat: string): string {
+  convertDateFormat(dateStr: string, inputFormat: string, outputFormat: string, adjust: number = 0): string {
     const parsedDate = parse(dateStr, inputFormat, new Date());
-    return format(parsedDate, outputFormat);
+    return format(addHours(parsedDate, adjust), outputFormat);
   }
 
   checkAndAdjustDate(
     dateStr: string,
     inputFormat: string,
-    outputFormat: string
+    outputFormat: string,
+    adjust: number = 0,
   ): string {
     // Parse the input date
     const parsedInputDate = parse(dateStr, inputFormat, new Date());
@@ -39,10 +40,10 @@ export class UtilService {
       // Add 1 hour and 5 minutes to current date if input date is in the past
       const adjustedDate = addMinutes(addHours(currentDate, 1), 5);
 
-      return format(adjustedDate, outputFormat);
+      return format(addHours(adjustedDate, adjust), outputFormat);
     }
 
 // If input date is not before current date, return it as is in the desired format
-    return format(parsedInputDate, outputFormat);
+    return format(addHours(parsedInputDate, adjust), outputFormat);
   }
 }
