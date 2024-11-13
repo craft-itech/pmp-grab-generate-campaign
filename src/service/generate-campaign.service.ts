@@ -129,7 +129,6 @@ export class GenerateCampaignService {
     workingHour.sat = day;
 
     conditions.startTime = this.utilService.checkAndAdjustDate(strStartDate, inputDateFormat, grabDateFormat) + 'Z';
-    this.logger.debug("Promotion end date : " + strEndDate)
     conditions.endTime = this.utilService.convertDateFormat(strEndDate, inputDateFormat, grabDateFormat) + 'Z';
     conditions.eaterType = 'all';
     if (entity.bundle_qty)
