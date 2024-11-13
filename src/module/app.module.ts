@@ -13,6 +13,7 @@ import { PromotionGrabmartEntity } from 'src/entity/promotion_grabmart.entity';
 import { TypeOrmConfigService } from 'src/typeorm/typeorm.service';
 import { WinstonModule } from 'nest-winston';
 import { HttpModule } from '@nestjs/axios';
+import { MasterGrabmartEntity } from 'src/entity/master_grabmart.entity';
 
 @Module({
   imports: [ConfigModule.forRoot(),
@@ -75,7 +76,7 @@ import { HttpModule } from '@nestjs/axios';
     ],
 }),
   TypeOrmModule.forRootAsync({ useClass: TypeOrmConfigService }),
-  TypeOrmModule.forFeature([PromotionGrabmartEntity]),
+  TypeOrmModule.forFeature([PromotionGrabmartEntity, MasterGrabmartEntity]),
   ],
   controllers: [AppController],
   providers: [

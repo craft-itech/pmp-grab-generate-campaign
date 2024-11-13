@@ -5,7 +5,7 @@ import { ConditionDto } from 'src/dtos/grab/condition/condition.dto';
 import { DiscountDto } from 'src/dtos/grab/discount/discount.dto';
 import { PromotionGrabmartEntity } from 'src/entity/promotion_grabmart.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { UtilService } from './util.sevice';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -15,29 +15,83 @@ import { GrabCampaignResposneDto } from 'src/dtos/grab/grab-campaign-response.dt
 import { Period } from 'src/dtos/grab/condition/period.dto';
 import { Day } from 'src/dtos/grab/condition/day.dto';
 import { WorkingHour } from 'src/dtos/grab/condition/workinghour.dto';
+import { MasterGrabmartEntity } from 'src/entity/master_grabmart.entity';
 
 @Injectable()
 export class GenerateCampaignService {
   constructor(
     @InjectRepository(PromotionGrabmartEntity) 
     private readonly promotionGrabmartRepository: Repository<PromotionGrabmartEntity>,
+    @InjectRepository(MasterGrabmartEntity) 
+    private readonly masterGrabmartRepository: Repository<MasterGrabmartEntity>,
     @Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: LoggerService,
     private readonly httpService: HttpService,
     private readonly utilService: UtilService,
-  ) {}
+  ) {
+    setInterval(this.checkCampaign.bind(this), 60000);
+  }
 
+
+  async checkCampaign() {
+    const promotions = await this.promotionGrabmartRepository.find({
+      where: { 
+        status: 0
+      },
+      order: {
+        promotion_mode: 'ASC',
+        created_date: 'ASC',
+      },
+    });   
+    
+    this.logger.log("Found remain promotion to process : " + promotions.length)
+
+    for (const promotion of promotions) {
+      if (promotion.promotion_mode === 'CANCEL') {
+        this.processCampaign(promotion);
+      }
+      else {
+        const barcodes = promotion.barcode.split(',');
+
+        let syncFinishCount = 0;
+        for (const barcode of barcodes) {
+          syncFinishCount = syncFinishCount + await this.masterGrabmartRepository.count({
+            where: {
+              status: LessThan(0),
+              barcode: barcode,
+              seller_id: promotion.merchant_id,
+            }
+          });
+        }
+
+        if (barcodes.length === syncFinishCount) {
+          this.processCampaign(promotion);
+        }
+        else {
+          this.logger.debug('Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' has ' +barcodes.length + ' barcode(s) but master sync success ' + syncFinishCount);
+        }
+      }
+    }
+    
+    //get campaign
+    //check masteer
+    //process promotion
+  }
 
   async readCampaign(merchantID: string) {
     this.logger.debug("Trigger merchantID : " + merchantID);
     const promotions: PromotionGrabmartEntity[] = await this.getPromotionsByMerchantId(merchantID);
     for(const promotion of promotions) {
-      if(promotion.promotion_mode == "INSERT") {
-        this.createCampaign(promotion, merchantID);
-      } else {
-        this.deleteCampaign(promotion, merchantID);
-      }
+      await this.processCampaign(promotion);
     }
   }
+
+  async processCampaign(promotion: PromotionGrabmartEntity) {
+    if(promotion.promotion_mode === "INSERT") {
+      this.createCampaign(promotion, promotion.merchant_id);
+    } else {
+      this.deleteCampaign(promotion, promotion.merchant_id);
+    }
+}
 
   async createCampaign(promotion: PromotionGrabmartEntity, merchantID: string) {
 
@@ -57,14 +111,14 @@ export class GenerateCampaignService {
   
         this.promotionGrabmartRepository.save(promotion);
   
-        this.logger.debug("Successfully posted campaign for merchant ID: " + merchantID + " get campaign id: " + promotion.campaign_id);
+        this.logger.debug("Successfully posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
       }
       else {
-        this.logger.error("Failed to post campaign for merchant ID: " + merchantID + " response code: " + response.status);
+        this.logger.error("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + " response code: " + response.status);
         throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (error) {
-      this.logger.error("Failed to post campaign for merchant ID: " + merchantID, error);
+      this.logger.error("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id, error);
     }  
   }
 
