@@ -112,39 +112,30 @@ export class GenerateCampaignService {
     const url = process.env.ADAPTER_URL + "/campaign";
     const grabCampaign: GrabCampaignDto = await this.setGrabCampaign(promotion);
 
-    if (parse(grabCampaign.conditions.endTime, "yyyy-MM-dd'T'HH:mm:ss'Z'", new Date()).getTime() > new Date().getTime()) {
-      this.logger.debug("Create campaign : " + JSON.stringify(grabCampaign));
-      try {
-        // Send POST request with grabCampaign as the body
-        const response = await lastValueFrom(
-          this.httpService.post<GrabCampaignResposneDto>(url, grabCampaign)
-        );
+    this.logger.debug("Create campaign : " + JSON.stringify(grabCampaign));
+    try {
+      // Send POST request with grabCampaign as the body
+      const response = await lastValueFrom(
+        this.httpService.post<GrabCampaignResposneDto>(url, grabCampaign)
+      );
+
+
+      if (response.status === 200) {
+        promotion.campaign_id = response.data.campaignID;
+        promotion.status = 99;
+        promotion.updated_date = new Date();
   
+        this.promotionGrabmartRepository.save(promotion);
   
-        if (response.status === 200) {
-          promotion.campaign_id = response.data.campaignID;
-          promotion.status = 99;
-          promotion.updated_date = new Date();
-    
-          this.promotionGrabmartRepository.save(promotion);
-    
-          this.logger.debug("Successfully posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
-        }
-        else {
-          this.logger.error("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + " response code: " + response.status);
-          throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-      } catch (error) {
-        this.logger.error("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id, error);
-      }  
-    }
-    else {
-      this.logger.warn("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + ' because end date already pass.');
-      promotion.status = 103;
-      promotion.updated_date = new Date();
-    
-      this.promotionGrabmartRepository.save(promotion);
-}
+        this.logger.debug("Successfully posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
+      }
+      else {
+        this.logger.error("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + " response code: " + response.status);
+        throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    } catch (error) {
+      this.logger.error("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id, error);
+    }  
   }
 
   async deleteCampaign(promotion: PromotionGrabmartEntity, merchantID: string) {
