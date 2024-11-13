@@ -103,7 +103,7 @@ export class GenerateCampaignService {
 
   private async getConditions(entity: PromotionGrabmartEntity): Promise<ConditionDto> {
     const inputDateFormat: string = 'yyyy-MM-dd HH:mm:ss';
-    const grabDateFormat: string  = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    const grabDateFormat: string  = "yyyy-MM-dd'T'HH:mm:ss";
     const strStartDate = entity.start_date + " 00:00:00"
     const strEndDate = entity.end_date + " 23:59:59"
 
@@ -125,8 +125,8 @@ export class GenerateCampaignService {
     workingHour.fri = day;
     workingHour.sat = day;
 
-    conditions.startTime = this.utilService.checkAndAdjustDate(strStartDate, inputDateFormat, grabDateFormat);
-    conditions.endTime = this.utilService.convertDateFormat(strEndDate, inputDateFormat, grabDateFormat);
+    conditions.startTime = this.utilService.checkAndAdjustDate(strStartDate, inputDateFormat, grabDateFormat) + 'Z';
+    conditions.endTime = this.utilService.convertDateFormat(strEndDate, inputDateFormat, grabDateFormat) + 'Z';
     conditions.eaterType = 'all';
     if (entity.bundle_qty)
     conditions.bundleQuantity = entity.bundle_qty ? parseInt(entity.bundle_qty) : 0;
