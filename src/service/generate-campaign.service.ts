@@ -56,7 +56,7 @@ export class GenerateCampaignService {
       if (promotion.promotion_mode === 'CANCEL') {
         this.processCampaign(promotion);
       }
-      else if (parse(promotion.end_date + " 23:59:59", "yyyy-MM-dd HH:mm:ss", new Date()).getTime() > new Date().getTime()) {
+      else if (parse(promotion.end_date + " 23:59:59", "yyyy-MM-dd HH:mm:ss", new Date()).getTime() <= new Date().getTime()) {
         promotion.status = 103;
         promotion.updated_date = new Date();
 
