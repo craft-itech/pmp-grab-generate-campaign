@@ -12,6 +12,9 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { ScopeDto } from 'src/dtos/grab/discount/scope.dto';
 import { lastValueFrom } from 'rxjs';
 import { GrabCampaignResposneDto } from 'src/dtos/grab/grab-campaign-response.dto';
+import { Period } from 'src/dtos/grab/condition/period.dto';
+import { Day } from 'src/dtos/grab/condition/day.dto';
+import { WorkingHour } from 'src/dtos/grab/condition/workinghour.dto';
 
 @Injectable()
 export class GenerateCampaignService {
@@ -87,7 +90,7 @@ export class GenerateCampaignService {
     // Return the populated GrabCampaignDto
     const campaignDto = new GrabCampaignDto();
     campaignDto.id = entity.campaign_id;
-    campaignDto.createdBy = "PMP";
+    //campaignDto.createdBy = "PMP";
     campaignDto.merchantID = entity.merchant_id;
     campaignDto.name = entity.custom_tag;
     //campaignDto.quotas = fetchedQuotas;
@@ -106,11 +109,28 @@ export class GenerateCampaignService {
 
     const conditions: ConditionDto = new ConditionDto;
 
+    const period = new Period();
+    period.startTime = "00:00";
+    period.endTime = "23:59";
+
+    const day = new Day();
+    day.periods = [period];
+
+    const workingHour = new WorkingHour();
+    workingHour.sun = day;
+    workingHour.mon = day;
+    workingHour.tue = day;
+    workingHour.wed = day;
+    workingHour.thu = day;
+    workingHour.fri = day;
+    workingHour.sat = day;
+
     conditions.startTime = this.utilService.checkAndAdjustDate(strStartDate, inputDateFormat, grabDateFormat);
     conditions.endTime = this.utilService.convertDateFormat(strEndDate, inputDateFormat, grabDateFormat);
     conditions.eaterType = 'all';
     if (entity.bundle_qty)
     conditions.bundleQuantity = entity.bundle_qty ? parseInt(entity.bundle_qty) : 0;
+    conditions.workingHour = workingHour;
 
     return conditions;
   }

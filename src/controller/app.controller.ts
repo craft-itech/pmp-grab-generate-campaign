@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { GenerateCampaignService } from 'src/service/generate-campaign.service';
 
 @Controller()
@@ -12,8 +12,8 @@ export class AppController {
     return 'Success';
   }
 
-  @Post('trigger')
-  createProduct(@Body() merchantId: string){
-    return this.genCampaignService.readCampaign('GFSBPOS-223-168');
+  @Post('trigger/:seller')
+  createProduct(@Param('seller') merchantId){
+    return this.genCampaignService.readCampaign(merchantId);
   }
 }
