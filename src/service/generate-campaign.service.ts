@@ -218,7 +218,7 @@ export class GenerateCampaignService {
     const discount: DiscountDto = new DiscountDto();
 
     discount.type = entity.grab_promotion_type;
-    discount.value = parseInt(entity.campaign_value);
+    discount.value = parseInt(entity.campaign_value)/100;
     discount.scope = await this.getScope(entity);
 
     return discount;
