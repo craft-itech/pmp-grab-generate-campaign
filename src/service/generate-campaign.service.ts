@@ -35,7 +35,8 @@ export class GenerateCampaignService {
     setInterval(() => {
       clearTimeout(this.debounceTimeout);
       this.debounceTimeout = setTimeout(this.checkCampaign.bind(this), 60000);
-    }, 60000);  }
+    }, 60000);  
+  }
 
 
   async checkCampaign() {
