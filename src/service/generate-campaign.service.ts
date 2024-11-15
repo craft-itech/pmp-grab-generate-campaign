@@ -55,13 +55,13 @@ export class GenerateCampaignService {
 
     for (const promotion of promotions) {
       if (promotion.promotion_mode === 'DELETE') {
-        this.processCampaign(promotion);
+        await this.processCampaign(promotion);
       }
       else if (parse(promotion.end_date + " 23:59:59", "yyyy-MM-dd HH:mm:ss", new Date()).getTime() <= new Date().getTime()) {
         promotion.status = 103;
         promotion.updated_date = new Date();
 
-        this.promotionGrabmartRepository.save(promotion);
+        await this.promotionGrabmartRepository.save(promotion);
         this.logger.warn("Failed to post campaign for merchant ID: " + promotion.merchant_id + ' of ID ' + promotion.id + ' because end date already pass.');
       }
       else {
@@ -79,7 +79,7 @@ export class GenerateCampaignService {
         }
 
         if (barcodes.length === syncFinishCount) {
-          this.processCampaign(promotion);
+          await this.processCampaign(promotion);
         }
         else {
           this.logger.debug('Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' has ' +barcodes.length + ' barcode(s) but master sync success ' + syncFinishCount);
@@ -102,9 +102,9 @@ export class GenerateCampaignService {
 
   async processCampaign(promotion: PromotionGrabmartEntity) {
     if(promotion.promotion_mode === "INSERT") {
-      this.createCampaign(promotion, promotion.merchant_id);
+      await this.createCampaign(promotion, promotion.merchant_id);
     } else {
-      this.deleteCampaign(promotion, promotion.merchant_id);
+      await this.deleteCampaign(promotion, promotion.merchant_id);
     }
 }
 
@@ -126,7 +126,7 @@ export class GenerateCampaignService {
         promotion.status = 99;
         promotion.updated_date = new Date();
   
-        this.promotionGrabmartRepository.save(promotion);
+        await this.promotionGrabmartRepository.save(promotion);
   
         this.logger.debug("Successfully posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
       }
@@ -152,7 +152,7 @@ export class GenerateCampaignService {
         promotion.status = 99;
         promotion.updated_date = new Date();
   
-        this.promotionGrabmartRepository.save(promotion);
+        await this.promotionGrabmartRepository.save(promotion);
 
         this.logger.debug("Successfully delete campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
       }
