@@ -54,7 +54,7 @@ export class GenerateCampaignService {
     this.logger.log("Found remain promotion to process : " + promotions.length)
 
     for (const promotion of promotions) {
-      if (promotion.promotion_mode === 'CANCEL') {
+      if (promotion.promotion_mode === 'DELETE') {
         this.processCampaign(promotion);
       }
       else if (parse(promotion.end_date + " 23:59:59", "yyyy-MM-dd HH:mm:ss", new Date()).getTime() <= new Date().getTime()) {
