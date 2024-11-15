@@ -148,6 +148,14 @@ export class GenerateCampaignService {
       if (response.status !== 200) {
         throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
       }
+      else {
+        promotion.status = 99;
+        promotion.updated_date = new Date();
+  
+        this.promotionGrabmartRepository.save(promotion);
+
+        this.logger.debug("Successfully delete campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
+      }
     } catch (error) {
       this.logger.error("Failed to delete campaign for campaign ID: " + promotion.campaign_id, error);
     }
