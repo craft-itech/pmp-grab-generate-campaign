@@ -42,18 +42,10 @@ export class GenerateCampaignService {
   async checkCampaign() {
     const updatestatus = new Date().getTime();
 
-    await this.promotionGrabmartRepository.update(
-      { 
-        bu: process.env.BU,
-        status: 0
-      },
-      { status : updatestatus }
-    ); 
-
     const promotions = await this.promotionGrabmartRepository.find({
       where: { 
         bu: process.env.BU,
-        status: updatestatus
+        status: 0
       },
       order: {
         promotion_mode: 'ASC',
