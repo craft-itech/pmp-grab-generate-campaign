@@ -64,7 +64,7 @@ export class GenerateCampaignService {
         await this.promotionGrabmartRepository.save(promotion);
         this.logger.warn("Failed to post campaign for merchant ID: " + promotion.merchant_id + ' of ID ' + promotion.id + ' because end date already pass.');
       }
-      else {
+      else if (promotion.barcode) {
         const barcodes = promotion.barcode?.split(',');
 
         let syncFinishCount = 0;
