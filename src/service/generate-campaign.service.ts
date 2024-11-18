@@ -65,7 +65,7 @@ export class GenerateCampaignService {
         this.logger.warn("Failed to post campaign for merchant ID: " + promotion.merchant_id + ' of ID ' + promotion.id + ' because end date already pass.');
       }
       else {
-        const barcodes = promotion.barcode.split(',');
+        const barcodes = promotion.barcode?.split(',');
 
         let syncFinishCount = 0;
         for (const barcode of barcodes) {
@@ -78,7 +78,7 @@ export class GenerateCampaignService {
           });
         }
 
-        if (barcodes.length === syncFinishCount) {
+        if (barcodes.length === syncFinishCount && barcodes.length > 0) {
           await this.processCampaign(promotion);
         }
         else {
@@ -237,7 +237,7 @@ export class GenerateCampaignService {
     const scope: ScopeDto = new ScopeDto();
 
     scope.type = "items";
-    scope.objectIDs = entity.barcode.split(',');
+    scope.objectIDs = entity.barcode?.split(',');
 
     return scope;
   }
