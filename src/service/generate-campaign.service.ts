@@ -40,10 +40,20 @@ export class GenerateCampaignService {
 
 
   async checkCampaign() {
+    const updatestatus = new Date().getTime();
+
+    await this.promotionGrabmartRepository.update(
+      { 
+        bu: process.env.BU,
+        status: 0
+      },
+      { status : updatestatus }
+    ); 
+
     const promotions = await this.promotionGrabmartRepository.find({
       where: { 
         bu: process.env.BU,
-        status: 0
+        status: updatestatus
       },
       order: {
         promotion_mode: 'ASC',
@@ -51,18 +61,18 @@ export class GenerateCampaignService {
       },
     });   
     
-    this.logger.log("Found remain promotion to process : " + promotions.length)
+    this.logger.log(updatestatus + " - Found remain promotion to process : " + promotions.length)
 
     for (const promotion of promotions) {
       if (promotion.promotion_mode === 'DELETE') {
-        await this.processCampaign(promotion);
+        await this.processCampaign(promotion, updatestatus);
       }
       else if (parse(promotion.end_date + " 23:59:59", "yyyy-MM-dd HH:mm:ss", new Date()).getTime() <= new Date().getTime()) {
         promotion.status = 103;
         promotion.updated_date = new Date();
 
         await this.promotionGrabmartRepository.save(promotion);
-        this.logger.warn("Failed to post campaign for merchant ID: " + promotion.merchant_id + ' of ID ' + promotion.id + ' because end date already pass.');
+        this.logger.warn(updatestatus + " - Failed to post campaign for merchant ID: " + promotion.merchant_id + ' of ID ' + promotion.id + ' because end date already pass.');
       }
       else if (promotion.barcode) {
         const barcodes = promotion.barcode?.split(',');
@@ -79,11 +89,18 @@ export class GenerateCampaignService {
         }
 
         if (barcodes.length === syncFinishCount && barcodes.length > 0) {
-          await this.processCampaign(promotion);
+          await this.processCampaign(promotion, updatestatus);
         }
         else {
-          this.logger.debug('Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' has ' +barcodes.length + ' barcode(s) but master sync success ' + syncFinishCount);
+          this.logger.debug(updatestatus + ' - Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' has ' +barcodes.length + ' barcode(s) but master sync success ' + syncFinishCount);
         }
+      }
+      else {
+        this.logger.warn(updatestatus + ' - Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' no barcode');
+        promotion.status = 102;
+        promotion.updated_date = new Date();
+  
+        await this.promotionGrabmartRepository.save(promotion);
       }
     }
     
@@ -93,22 +110,23 @@ export class GenerateCampaignService {
   }
 
   async readCampaign(merchantID: string) {
-    this.logger.debug("Trigger merchantID : " + merchantID);
+    const updatestatus = new Date().getTime();
+    this.logger.debug(updatestatus + " - Trigger merchantID : " + merchantID);
     const promotions: PromotionGrabmartEntity[] = await this.getPromotionsByMerchantId(merchantID);
     for(const promotion of promotions) {
-      await this.processCampaign(promotion);
+      await this.processCampaign(promotion, updatestatus);
     }
   }
 
-  async processCampaign(promotion: PromotionGrabmartEntity) {
+  async processCampaign(promotion: PromotionGrabmartEntity, updatestatus: number) {
     if(promotion.promotion_mode === "INSERT") {
-      await this.createCampaign(promotion, promotion.merchant_id);
+      await this.createCampaign(promotion, promotion.merchant_id, updatestatus);
     } else {
-      await this.deleteCampaign(promotion, promotion.merchant_id);
+      await this.deleteCampaign(promotion, promotion.merchant_id, updatestatus);
     }
 }
 
-  async createCampaign(promotion: PromotionGrabmartEntity, merchantID: string) {
+  async createCampaign(promotion: PromotionGrabmartEntity, merchantID: string, updatestatus: number) {
 
     const url = process.env.ADAPTER_URL + "/campaign";
     const grabCampaign: GrabCampaignDto = await this.setGrabCampaign(promotion);
@@ -128,19 +146,19 @@ export class GenerateCampaignService {
   
         await this.promotionGrabmartRepository.save(promotion);
   
-        this.logger.debug("Successfully posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
+        this.logger.debug(updatestatus + " - Successfully posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
       }
       else {
-        this.logger.error("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + " response code: " + response.status);
+        this.logger.error(updatestatus + " - Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + " response code: " + response.status);
         throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (error) {
-      this.logger.error("Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id, error);
+      this.logger.error(updatestatus + " - Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id, error);
     }  
   }
 
-  async deleteCampaign(promotion: PromotionGrabmartEntity, merchantID: string) {
-    this.logger.debug("Delete merchantID : " + merchantID + " campaign id:" + promotion.campaign_id);
+  async deleteCampaign(promotion: PromotionGrabmartEntity, merchantID: string, updatestatus: number) {
+    this.logger.debug(updatestatus + " - Delete merchantID : " + merchantID + " campaign id:" + promotion.campaign_id);
     const url = process.env.ADAPTER_URL + "/campaign/"+promotion.campaign_id;
     
     try {
@@ -154,10 +172,10 @@ export class GenerateCampaignService {
   
         await this.promotionGrabmartRepository.save(promotion);
 
-        this.logger.debug("Successfully delete campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
+        this.logger.debug(updatestatus + " - Successfully delete campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
       }
     } catch (error) {
-      this.logger.error("Failed to delete campaign for campaign ID: " + promotion.campaign_id, error);
+      this.logger.error(updatestatus + " - Failed to delete campaign for campaign ID: " + promotion.campaign_id, error);
     }
   }
 
