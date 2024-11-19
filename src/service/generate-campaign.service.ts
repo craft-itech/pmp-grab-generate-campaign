@@ -5,7 +5,7 @@ import { ConditionDto } from 'src/dtos/grab/condition/condition.dto';
 import { DiscountDto } from 'src/dtos/grab/discount/discount.dto';
 import { PromotionGrabmartEntity } from 'src/entity/promotion_grabmart.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThan, Repository } from 'typeorm';
+import { MoreThan, LessThan, Repository } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { UtilService } from './util.sevice';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -42,10 +42,24 @@ export class GenerateCampaignService {
   async checkCampaign() {
     const updatestatus = new Date().getTime();
 
+    await this.promotionGrabmartRepository
+              .createQueryBuilder()
+              .update()
+              .set({ status: updatestatus })
+              .where('bu = :bu')
+              .andWhere('(status > :minStatus AND status < :maxStatus) OR status = :zeroStatus')
+              .setParameters({
+                bu: process.env.BU,
+                minStatus: 1000,
+                maxStatus: updatestatus - (1000 * 60 * 10),
+                zeroStatus: 0,
+              })
+              .execute();
+    
     const promotions = await this.promotionGrabmartRepository.find({
       where: { 
         bu: process.env.BU,
-        status: 0
+        status: updatestatus
       },
       order: {
         promotion_mode: 'ASC',
@@ -66,7 +80,36 @@ export class GenerateCampaignService {
         await this.promotionGrabmartRepository.save(promotion);
         this.logger.warn(updatestatus + " - Failed to post campaign for merchant ID: " + promotion.merchant_id + ' of ID ' + promotion.id + ' because end date already pass.');
       }
-      else if (promotion.barcode) {
+      else if (!promotion.barcode) {
+        this.logger.warn(updatestatus + ' - Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' no barcode');
+        promotion.status = 102;
+        promotion.updated_date = new Date();
+  
+        await this.promotionGrabmartRepository.save(promotion);
+      }
+      else if (promotion.grab_promotion_type === 'fix') {
+        const master = await this.masterGrabmartRepository.findOne({
+          where: {
+            status: LessThan(0),
+            barcode: promotion.barcode,
+            seller_id: promotion.merchant_id,
+          }
+        });
+
+        if (master) {
+          if (master.sold_by_weight) {
+            if (master.weight_unit === 'g') {
+              promotion.campaign_value = Math.ceil((parseInt(promotion.campaign_value) * master.weigth_value)/1000).toString();
+            }
+            else {
+              promotion.campaign_value = Math.ceil(parseInt(promotion.campaign_value) * master.weigth_value).toString();
+            }
+          }
+
+          await this.processCampaign(promotion, updatestatus);
+        }
+      }
+      else {
         const barcodes = promotion.barcode?.split(',');
 
         let syncFinishCount = 0;
@@ -86,13 +129,6 @@ export class GenerateCampaignService {
         else {
           this.logger.debug(updatestatus + ' - Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' has ' +barcodes.length + ' barcode(s) but master sync success ' + syncFinishCount);
         }
-      }
-      else {
-        this.logger.warn(updatestatus + ' - Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' no barcode');
-        promotion.status = 102;
-        promotion.updated_date = new Date();
-  
-        await this.promotionGrabmartRepository.save(promotion);
       }
     }
     
