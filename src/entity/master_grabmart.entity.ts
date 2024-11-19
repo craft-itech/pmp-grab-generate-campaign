@@ -15,7 +15,7 @@ export class MasterGrabmartEntity {
   @Column({ type: 'bigint', name: 'status' })
   status: number;
 
-  @Column({ type: 'boolean', name: 'sold_by_weight' })
+  @Column({ type: 'bit', name: 'sold_by_weight' })
   sold_by_weight: boolean;
 
   @Column({ length: '120', name: 'weight_unit' })
