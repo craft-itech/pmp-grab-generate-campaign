@@ -87,7 +87,7 @@ export class GenerateCampaignService {
   
         await this.promotionGrabmartRepository.save(promotion);
       }
-      else if (promotion.grab_promotion_type === 'fix') {
+      else if (promotion.grab_promotion_type === 'net') {
         const master = await this.masterGrabmartRepository.findOne({
           where: {
             status: LessThan(0),
