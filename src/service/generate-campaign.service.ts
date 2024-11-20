@@ -71,13 +71,13 @@ export class GenerateCampaignService {
 
     for (const promotion of promotions) {
       if (promotion.promotion_mode === 'DELETE') {
-        await this.processCampaign(promotion, updatestatus);
+        this.processCampaign(promotion, updatestatus);
       }
       else if (parse(promotion.end_date + " 23:59:59", "yyyy-MM-dd HH:mm:ss", new Date()).getTime() <= new Date().getTime()) {
         promotion.status = 103;
         promotion.updated_date = new Date();
 
-        await this.promotionGrabmartRepository.save(promotion);
+        this.promotionGrabmartRepository.save(promotion);
         this.logger.warn(updatestatus + " - Failed to post campaign for merchant ID: " + promotion.merchant_id + ' of ID ' + promotion.id + ' because end date already pass.');
       }
       else if (!promotion.barcode) {
@@ -85,7 +85,7 @@ export class GenerateCampaignService {
         promotion.status = 102;
         promotion.updated_date = new Date();
   
-        await this.promotionGrabmartRepository.save(promotion);
+        this.promotionGrabmartRepository.save(promotion);
       }
       else if (promotion.grab_promotion_type === 'net') {
         const master = await this.masterGrabmartRepository.findOne({
@@ -106,7 +106,7 @@ export class GenerateCampaignService {
             }
           }
 
-          await this.processCampaign(promotion, updatestatus);
+          this.processCampaign(promotion, updatestatus);
         }
       }
       else {
@@ -124,7 +124,7 @@ export class GenerateCampaignService {
         }
 
         if (barcodes.length === syncFinishCount && barcodes.length > 0) {
-          await this.processCampaign(promotion, updatestatus);
+          this.processCampaign(promotion, updatestatus);
         }
         else {
           this.logger.debug(updatestatus + ' - Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' has ' +barcodes.length + ' barcode(s) but master sync success ' + syncFinishCount);
@@ -142,15 +142,15 @@ export class GenerateCampaignService {
     this.logger.debug(updatestatus + " - Trigger merchantID : " + merchantID);
     const promotions: PromotionGrabmartEntity[] = await this.getPromotionsByMerchantId(merchantID);
     for(const promotion of promotions) {
-      await this.processCampaign(promotion, updatestatus);
+      this.processCampaign(promotion, updatestatus);
     }
   }
 
   async processCampaign(promotion: PromotionGrabmartEntity, updatestatus: number) {
     if(promotion.promotion_mode === "INSERT") {
-      await this.createCampaign(promotion, promotion.merchant_id, updatestatus);
+      this.createCampaign(promotion, promotion.merchant_id, updatestatus);
     } else {
-      await this.deleteCampaign(promotion, promotion.merchant_id, updatestatus);
+      this.deleteCampaign(promotion, promotion.merchant_id, updatestatus);
     }
 }
 
@@ -172,7 +172,7 @@ export class GenerateCampaignService {
         promotion.status = 99;
         promotion.updated_date = new Date();
   
-        await this.promotionGrabmartRepository.save(promotion);
+        this.promotionGrabmartRepository.save(promotion);
   
         this.logger.debug(updatestatus + " - Successfully posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
       }
@@ -198,7 +198,7 @@ export class GenerateCampaignService {
         promotion.status = 99;
         promotion.updated_date = new Date();
   
-        await this.promotionGrabmartRepository.save(promotion);
+        this.promotionGrabmartRepository.save(promotion);
 
         this.logger.debug(updatestatus + " - Successfully delete campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
       }
@@ -257,7 +257,7 @@ export class GenerateCampaignService {
     conditions.endTime = this.utilService.convertDateFormat(strEndDate, inputDateFormat, grabDateFormat, parseInt(process.env.ADJUST_TZ));
     conditions.eaterType = 'all';
     if (entity.bundle_qty)
-    conditions.bundleQuantity = entity.bundle_qty ? parseInt(entity.bundle_qty) : 0;
+      conditions.bundleQuantity = parseInt(entity.bundle_qty);
     conditions.workingHour = workingHour;
 
     return conditions;
