@@ -44,7 +44,7 @@ export class GenerateCampaignService {
 
     const sql = 'UPDATE top(@0) cfgsmp_promotion_grabmart SET status = @1 WHERE bu = @2 AND ((status > @3 AND status < @4) OR status = 0)';
 
-    await this.promotionGrabmartRepository.query(sql, [process.env.BATCH_SIZE, updatestatus, process.env.BU, 1000, updatestatus - (1000 * 60 * 10)]);
+    await this.promotionGrabmartRepository.query(sql, [parseInt(process.env.BATCH_SIZE), updatestatus, process.env.BU, 1000, updatestatus - (1000 * 60 * 10)]);
 
     /*
     await this.promotionGrabmartRepository
