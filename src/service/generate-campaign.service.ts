@@ -20,7 +20,7 @@ import { parse } from 'date-fns';
 
 @Injectable()
 export class GenerateCampaignService {
-  private debounceTimeout;
+  //private debounceTimeout;
   constructor(
     @InjectRepository(PromotionGrabmartEntity) 
     private readonly promotionGrabmartRepository: Repository<PromotionGrabmartEntity>,
@@ -30,12 +30,15 @@ export class GenerateCampaignService {
     private readonly httpService: HttpService,
     private readonly utilService: UtilService,
   ) {
+    /*
     this.debounceTimeout = null;
 
     setInterval(() => {
       clearTimeout(this.debounceTimeout);
       this.debounceTimeout = setTimeout(this.checkCampaign.bind(this), 60000);
-    }, 60000);  
+    }, 60000); 
+    */
+    setInterval(this.checkCampaign.bind(this), 60000); 
   }
 
 
