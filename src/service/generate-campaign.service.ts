@@ -42,12 +42,17 @@ export class GenerateCampaignService {
   async checkCampaign() {
     const updatestatus = new Date().getTime();
 
+    const sql = 'UPDATE top(1000) cfgsmp_promotion_grabmart SET status = @0 WHERE bu = @1 AND ((status > @2 AND status < @3) OR status = 0)';
+
+    await this.promotionGrabmartRepository.query(sql, [updatestatus, process.env.BU, 1000, updatestatus - (1000 * 60 * 10)]);
+
+    /*
     await this.promotionGrabmartRepository
               .createQueryBuilder()
               .update()
               .set({ status: updatestatus })
               .where('bu = :bu')
-              .andWhere('(status > :minStatus AND status < :maxStatus) OR status = :zeroStatus')
+              .andWhere('((status > :minStatus AND status < :maxStatus) OR status = :zeroStatus)')
               .setParameters({
                 bu: process.env.BU,
                 minStatus: 1000,
@@ -55,6 +60,7 @@ export class GenerateCampaignService {
                 zeroStatus: 0,
               })
               .execute();
+    */
     
     const promotions = await this.promotionGrabmartRepository.find({
       where: { 
