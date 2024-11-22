@@ -184,13 +184,18 @@ export class GenerateCampaignService {
 
 
       if (response.status === 200) {
-        promotion.campaign_id = response.data.campaignID;
-        promotion.status = 99;
-        promotion.updated_date = new Date();
+        if (response.data.status === 0) {
+          promotion.campaign_id = response.data.campaignID;
+          promotion.status = 99;
+          promotion.updated_date = new Date();
   
-        this.promotionGrabmartRepository.save(promotion);
+          this.promotionGrabmartRepository.save(promotion);
   
-        this.logger.debug(updatestatus + " - Successfully posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
+          this.logger.debug(updatestatus + " - Successfully posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
+        }
+        else {
+          this.logger.debug(updatestatus + " - Failed to posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " error message " + response.data.message);
+        }
       }
       else {
         this.logger.error(updatestatus + " - Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + " response code: " + response.status);
