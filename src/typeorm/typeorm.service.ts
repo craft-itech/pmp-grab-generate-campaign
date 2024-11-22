@@ -18,6 +18,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
         trustServerCertificate: true,
         validateConnection: false
       },
+      requestTimeout: Number(process.env.DB_REQUEST_TIMEOUT),
       //logging: true,
     };
   }
