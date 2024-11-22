@@ -42,8 +42,15 @@ export class GenerateCampaignService {
   }
 
 
+  
+  async getUpdateStatus() : Promise<number> {
+    const updatestatus = new Date().getTime() - 1732000000000;
+    const random = Math.floor(Math.random() * 1000);
+    return (updatestatus * 1000) + random;
+  }
+
   async checkCampaign() {
-    const updatestatus = new Date().getTime();
+    const updatestatus = await this.getUpdateStatus();
 
     const sql = 'UPDATE top(@0) cfgsmp_promotion_grabmart SET status = @1 WHERE bu = @2 AND ((status > @3 AND status < @4) OR status = 0)';
 
