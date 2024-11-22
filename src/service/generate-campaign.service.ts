@@ -182,9 +182,8 @@ export class GenerateCampaignService {
         this.httpService.post<GrabCampaignResposneDto>(url, grabCampaign)
       );
 
-
+      this.logger.debug(updatestatus + " - Response data : " + response);
       if (response.status === 200) {
-        this.logger.debug(updatestatus + " - Response data : " + response.data);
         if (response.data.status === 0) {
           promotion.campaign_id = response.data.campaignID;
           promotion.status = 99;
@@ -200,7 +199,7 @@ export class GenerateCampaignService {
       }
       else {
         this.logger.error(updatestatus + " - Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + " response code: " + response.status);
-        throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
+        //throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (error) {
       this.logger.error(updatestatus + " - Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id, error);
