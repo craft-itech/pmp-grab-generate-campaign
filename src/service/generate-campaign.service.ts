@@ -184,6 +184,7 @@ export class GenerateCampaignService {
 
 
       if (response.status === 200) {
+        this.logger.debug(updatestatus + " - Response data : " + response.data);
         if (response.data.status === 0) {
           promotion.campaign_id = response.data.campaignID;
           promotion.status = 99;
