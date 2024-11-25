@@ -69,6 +69,10 @@ export class GenerateCampaignService {
     const updatestatus = await this.getUpdateStatus();
     const lastwait = updatestatus - (1000 * 60 * parseInt(process.env.BATCH_WAIT) * 1000);
 
+    this.logger.debug(updatestatus + " - begin batch ");
+
+    this.logger.debug(updatestatus + " - last wait is " + lastwait);
+
     const sql = 'UPDATE top(@0) cfgsmp_promotion_grabmart SET status = @1 WHERE bu = @2 AND ((status > @3 AND status < @4) OR status = 0) AND merchant_id not in (SELECT merchant_id FROM cfgsmp_promotion_grabmart WHERE bu = @5 AND status >= @6)';
 
     await this.promotionGrabmartRepository.query(sql, [parseInt(process.env.BATCH_SIZE), updatestatus, process.env.BU, 1000, lastwait, process.env.BU, lastwait]);
@@ -105,6 +109,8 @@ export class GenerateCampaignService {
     for (const merchantPromotion of merchantPromotions) {
       this.processCampaignByMerchant(merchantPromotion, updatestatus);
     }
+
+    this.logger.debug(updatestatus + " - finish batch ");
   }
 
   async processCampaignByMerchant(promotions : PromotionGrabmartEntity[], updatestatus : number) {
