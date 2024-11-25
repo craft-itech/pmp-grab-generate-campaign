@@ -5,7 +5,7 @@ import { ConditionDto } from 'src/dtos/grab/condition/condition.dto';
 import { DiscountDto } from 'src/dtos/grab/discount/discount.dto';
 import { PromotionGrabmartEntity } from 'src/entity/promotion_grabmart.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, LessThan, Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { UtilService } from './util.sevice';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
@@ -49,6 +49,22 @@ export class GenerateCampaignService {
     return (updatestatus * 1000) + random;
   }
 
+  async groupPromotionsByMerchant(promotions : PromotionGrabmartEntity[]) : Promise<PromotionGrabmartEntity[][]> {
+    const groupedPromotions: { [merchantID: string]: PromotionGrabmartEntity[] } = {};
+  
+    promotions.forEach(promotion => {
+      const { merchant_id } = promotion;
+  
+      if (!groupedPromotions[merchant_id]) {
+        groupedPromotions[merchant_id] = [];
+      }
+  
+      groupedPromotions[merchant_id].push(promotion);
+    });
+  
+    return Object.values(groupedPromotions);
+  }
+
   async checkCampaign() {
     const updatestatus = await this.getUpdateStatus();
 
@@ -82,12 +98,20 @@ export class GenerateCampaignService {
         created_date: 'ASC',
       },
     });   
-    
+
+    const merchantPromotions = await this.groupPromotionsByMerchant(promotions);
+
+    for (const merchantPromotion of merchantPromotions) {
+      this.processCampaignByMerchant(merchantPromotion, updatestatus);
+    }
+  }
+
+  async processCampaignByMerchant(promotions : PromotionGrabmartEntity[], updatestatus : number) {
     this.logger.log(updatestatus + " - Found remain promotion to process : " + promotions.length)
 
     for (const promotion of promotions) {
       if (promotion.promotion_mode === 'DELETE') {
-        this.processCampaign(promotion, updatestatus);
+        await this.processCampaign(promotion, updatestatus);
       }
       else if (parse(promotion.end_date + " 23:59:59", "yyyy-MM-dd HH:mm:ss", new Date()).getTime() <= new Date().getTime()) {
         promotion.status = 103;
@@ -122,7 +146,7 @@ export class GenerateCampaignService {
             }
           }
 
-          this.processCampaign(promotion, updatestatus);
+          await this.processCampaign(promotion, updatestatus);
         }
       }
       else {
@@ -140,7 +164,7 @@ export class GenerateCampaignService {
         }
 
         if (barcodes.length === syncFinishCount && barcodes.length > 0) {
-          this.processCampaign(promotion, updatestatus);
+          await this.processCampaign(promotion, updatestatus);
         }
         else {
           this.logger.debug(updatestatus + ' - Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' has ' +barcodes.length + ' barcode(s) but master sync success ' + syncFinishCount);
@@ -164,9 +188,9 @@ export class GenerateCampaignService {
 
   async processCampaign(promotion: PromotionGrabmartEntity, updatestatus: number) {
     if(promotion.promotion_mode === "INSERT") {
-      this.createCampaign(promotion, promotion.merchant_id, updatestatus);
+      await this.createCampaign(promotion, promotion.merchant_id, updatestatus);
     } else {
-      this.deleteCampaign(promotion, promotion.merchant_id, updatestatus);
+      await this.deleteCampaign(promotion, promotion.merchant_id, updatestatus);
     }
 }
 
@@ -193,7 +217,7 @@ export class GenerateCampaignService {
           this.logger.debug(updatestatus + " - Successfully posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
         }
         else {
-          this.logger.debug(updatestatus + " - Failed to posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " error message " + response.data.message);
+          this.logger.error(updatestatus + " - Failed to posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " error message " + response.data.message);
         }
       }
       else {
