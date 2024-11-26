@@ -83,11 +83,11 @@ export class GenerateCampaignService {
     let retry = true
     while (retry) {
       try {
-        await this.promotionGrabmartRepository.query(sql, [parseInt(process.env.BATCH_SIZE), updatestatus, process.env.BU, 1000, lastwait, process.env.BU, lastwait, process.env.BATCH_SELLER_SIZE]);
+        await this.promotionGrabmartRepository.query(sql, [parseInt(process.env.BATCH_SIZE), updatestatus, process.env.BU, 1000, lastwait, process.env.BU, lastwait, parseInt(process.env.BATCH_SELLER_SIZE)]);
 
         retry = false;
       } catch (error) {
-        this.logger.warn(updatestatus + ' - Found error, wait 1000 ms and retry');
+        this.logger.warn(updatestatus + ' - Found error, wait 1000 ms and retry : ' + error );
         await this.sleep(1000)
       }
     }
