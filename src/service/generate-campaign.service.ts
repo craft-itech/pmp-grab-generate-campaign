@@ -156,6 +156,14 @@ export class GenerateCampaignService {
 
           await this.processCampaign(promotion, updatestatus);
         }
+        else {
+          promotion.status = 0;
+          promotion.updated_date = new Date();
+    
+          this.promotionGrabmartRepository.save(promotion);
+    
+          this.logger.debug(updatestatus + ' - Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' barcode ' + promotion.barcode + ' master not sync success ');
+        }
       }
       else {
         const barcodes = promotion.barcode?.split(',');
@@ -175,6 +183,11 @@ export class GenerateCampaignService {
           await this.processCampaign(promotion, updatestatus);
         }
         else {
+          promotion.status = 0;
+          promotion.updated_date = new Date();
+    
+          this.promotionGrabmartRepository.save(promotion);
+    
           this.logger.debug(updatestatus + ' - Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' has ' +barcodes.length + ' barcode(s) but master sync success ' + syncFinishCount);
         }
       }
@@ -259,6 +272,11 @@ export class GenerateCampaignService {
     try {
       const response = await lastValueFrom(this.httpService.delete(url));
       if (response.status !== 200) {
+        promotion.status = 0;
+        promotion.updated_date = new Date();
+  
+        this.promotionGrabmartRepository.save(promotion);
+  
         throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
       }
       else {
@@ -270,6 +288,11 @@ export class GenerateCampaignService {
         this.logger.debug(updatestatus + " - Successfully delete campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
       }
     } catch (error) {
+      promotion.status = 0;
+      promotion.updated_date = new Date();
+
+      this.promotionGrabmartRepository.save(promotion);
+
       this.logger.error(updatestatus + " - Failed to delete campaign for campaign ID: " + promotion.campaign_id + " Error : " + error);
     }
   }
