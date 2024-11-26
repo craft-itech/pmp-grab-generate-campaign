@@ -73,7 +73,8 @@ export class GenerateCampaignService {
 
     this.logger.debug(updatestatus + " - last wait is " + lastwait);
 
-    const sql = 'UPDATE top(@0) cfgsmp_promotion_grabmart SET status = @1 WHERE bu = @2 AND ((status > @3 AND status < @4) OR status = 0) AND merchant_id not in (SELECT merchant_id FROM cfgsmp_promotion_grabmart WHERE bu = @5 AND status >= @6)';
+    //const sql = 'UPDATE top(@0) cfgsmp_promotion_grabmart SET status = @1 WHERE bu = @2 AND ((status > @3 AND status < @4) OR status = 0) AND merchant_id not in (SELECT merchant_id FROM cfgsmp_promotion_grabmart WHERE bu = @5 AND status >= @6)';
+    const sql = 'WITH OrderedRows AS (SELECT TOP (@0) * FROM cfgsmp_promotion_grabmart WHERE bu = @2 AND ((status > @3 AND status < @4) OR status = 0) AND merchant_id NOT IN ( SELECT merchant_id FROM cfgsmp_promotion_grabmart WHERE bu = @5 AND status >= @6 ) ORDER BY updated_date ) UPDATE OrderedRows SET status = @1';
 
     await this.promotionGrabmartRepository.query(sql, [parseInt(process.env.BATCH_SIZE), updatestatus, process.env.BU, 1000, lastwait, process.env.BU, lastwait]);
 
@@ -224,14 +225,29 @@ export class GenerateCampaignService {
           this.logger.debug(updatestatus + " - Successfully posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
         }
         else {
+          promotion.status = 0;
+          promotion.updated_date = new Date();
+  
+          this.promotionGrabmartRepository.save(promotion);
+
           this.logger.error(updatestatus + " - Failed to posted campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " error message " + response.data.message);
         }
       }
       else {
+        promotion.status = 0;
+        promotion.updated_date = new Date();
+
+        this.promotionGrabmartRepository.save(promotion);
+
         this.logger.error(updatestatus + " - Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + " response code: " + response.status);
         //throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (error) {
+      promotion.status = 0;
+      promotion.updated_date = new Date();
+
+      this.promotionGrabmartRepository.save(promotion);
+
       this.logger.error(updatestatus + " - Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + " Error : " + error);
     }  
   }
