@@ -65,6 +65,10 @@ export class GenerateCampaignService {
     return Object.values(groupedPromotions);
   }
 
+  async sleep(millis: number) {
+    return new Promise(resolve => setTimeout(resolve, millis));
+  }
+
   async checkCampaign() {
     const updatestatus = await this.getUpdateStatus();
     const lastwait = updatestatus - (1000 * 60 * parseInt(process.env.BATCH_WAIT) * 1000);
@@ -76,7 +80,18 @@ export class GenerateCampaignService {
     //const sql = 'UPDATE top(@0) cfgsmp_promotion_grabmart SET status = @1 WHERE bu = @2 AND ((status > @3 AND status < @4) OR status = 0) AND merchant_id not in (SELECT merchant_id FROM cfgsmp_promotion_grabmart WHERE bu = @5 AND status >= @6)';
     const sql = 'WITH OrderedRows AS (SELECT TOP (@0) * FROM cfgsmp_promotion_grabmart WHERE bu = @2 AND ((status > @3 AND status < @4) OR status = 0) AND merchant_id NOT IN ( SELECT merchant_id FROM cfgsmp_promotion_grabmart WHERE bu = @5 AND status >= @6 ) ORDER BY updated_date ) UPDATE OrderedRows SET status = @1';
 
-    await this.promotionGrabmartRepository.query(sql, [parseInt(process.env.BATCH_SIZE), updatestatus, process.env.BU, 1000, lastwait, process.env.BU, lastwait]);
+    let retry = true
+    while (retry) {
+      try {
+        await this.promotionGrabmartRepository.query(sql, [parseInt(process.env.BATCH_SIZE), updatestatus, process.env.BU, 1000, lastwait, process.env.BU, lastwait]);
+
+        retry = false;
+      } catch (error) {
+        this.logger.warn(updatestatus + ' - Found error, wait 1000 ms and retry');
+        await this.sleep(1000)
+      }
+    }
+ 
 
     /*
     await this.promotionGrabmartRepository
