@@ -38,7 +38,7 @@ export class GenerateCampaignService {
       this.debounceTimeout = setTimeout(this.checkCampaign.bind(this), 60000);
     }, 60000); 
     */
-    setInterval(this.checkCampaign.bind(this), 60000); 
+    setInterval(this.checkCampaign.bind(this), parseInt(process.env.BATCH_PERIOD)); 
   }
 
 
@@ -235,7 +235,7 @@ export class GenerateCampaignService {
     const url = process.env.ADAPTER_URL + "/campaign";
     const grabCampaign: GrabCampaignDto = await this.setGrabCampaign(promotion);
 
-    this.logger.debug("Create campaign : " + JSON.stringify(grabCampaign));
+    this.logger.debug(updatestatus + " - Create campaign : " + JSON.stringify(grabCampaign));
     try {
       // Send POST request with grabCampaign as the body
       const response = await lastValueFrom(
