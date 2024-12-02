@@ -19,7 +19,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
         validateConnection: false
       },
       requestTimeout: Number(process.env.DB_REQUEST_TIMEOUT),
-      //logging: true,
+      logging: true,
     };
   }
 }

@@ -120,6 +120,8 @@ export class GenerateCampaignService {
       },
     });   
 
+    this.logger.log(updatestatus + " - Found promotion to process : " + promotions.length)
+
     const merchantPromotions = await this.groupPromotionsByMerchant(promotions);
 
     for (const merchantPromotion of merchantPromotions) {
@@ -130,7 +132,7 @@ export class GenerateCampaignService {
   }
 
   async processCampaignByMerchant(promotions : PromotionGrabmartEntity[], updatestatus : number) {
-    this.logger.log(updatestatus + " - Found remain promotion to process : " + promotions.length)
+    this.logger.log(updatestatus + " - Found remain promotion of each merchant to process : " + promotions.length)
 
     for (const promotion of promotions) {
       if (promotion.promotion_mode === 'DELETE') {
