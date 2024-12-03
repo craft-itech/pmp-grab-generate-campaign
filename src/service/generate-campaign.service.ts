@@ -113,7 +113,7 @@ console.log(countResult);
       const sql = 'WITH MerchantIds AS ( ' +
                   'SELECT DISTINCT TOP (@7) merchant_id ' +
                   'FROM cfgsmp_promotion_grabmart ' +
-                  'WHERE ((status > @3 and status < @4) or status = 0) AND merchant_id NOT IN ( ' +
+                  'WHERE bu = @2 AND ((status > @3 AND status < @4) or status = 0) AND merchant_id NOT IN ( ' +
                   'SELECT merchant_id ' +
                   'FROM cfgsmp_promotion_grabmart ' +
                   "WHERE bu = @2 AND status >= @6 " +
