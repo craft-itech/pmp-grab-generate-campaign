@@ -38,6 +38,7 @@ export class GenerateCampaignService {
       this.debounceTimeout = setTimeout(this.checkCampaign.bind(this), 60000);
     }, 60000); 
     */
+    this.checkCampaign();
     setInterval(this.checkCampaign.bind(this), parseInt(process.env.BATCH_PERIOD)); 
   }
 
@@ -78,12 +79,35 @@ export class GenerateCampaignService {
     this.logger.debug(updatestatus + " - last wait is " + lastwait);
 
     //const sql = 'UPDATE top(@0) cfgsmp_promotion_grabmart SET status = @1 WHERE bu = @2 AND ((status > @3 AND status < @4) OR status = 0) AND merchant_id not in (SELECT merchant_id FROM cfgsmp_promotion_grabmart WHERE bu = @5 AND status >= @6)';
-    const sql = 'WITH OrderedRows AS (SELECT TOP (@0) * FROM cfgsmp_promotion_grabmart WHERE bu = @2 AND ((status > @3 AND status < @4) OR status = 0) AND merchant_id IN ( SELECT DISTINCT TOP(@7) merchant_id FROM cfgsmp_promotion_grabmart WHERE merchant_id NOT IN (SELECT merchant_id FROM cfgsmp_promotion_grabmart WHERE bu = @5 AND status >= @6)) ORDER BY updated_date ) UPDATE OrderedRows SET status = @1';
+    //const sql = 'WITH OrderedRows AS (SELECT TOP (@0) * FROM cfgsmp_promotion_grabmart WHERE bu = @2 AND ((status > @3 AND status < @4) OR status = 0) AND merchant_id IN ( SELECT DISTINCT TOP(@7) merchant_id FROM cfgsmp_promotion_grabmart WHERE merchant_id NOT IN (SELECT merchant_id FROM cfgsmp_promotion_grabmart WHERE bu = @5 AND status >= @6)) ORDER BY updated_date ) UPDATE OrderedRows SET status = @1';
+    const sql = 'WITH MerchantIds AS ( ' +
+              'SELECT DISTINCT TOP (@7) merchant_id ' +
+              'FROM cfgsmp_promotion_grabmart ' +
+              'WHERE merchant_id NOT IN ( ' +
+              'SELECT merchant_id ' +
+              'FROM cfgsmp_promotion_grabmart ' +
+              'WHERE bu = @2 AND status >= @6 ' +
+              ') ' +
+              '), ' +
+              'OrderedRows AS ( ' +
+              'SELECT *, ' +
+              'ROW_NUMBER() OVER (PARTITION BY merchant_id ORDER BY updated_date) AS RowNum ' +
+              'FROM cfgsmp_promotion_grabmart ' +
+              'WHERE bu = @5 ' +
+              'AND ((status > @3 AND status < @4) OR status = 0) ' +
+              'AND merchant_id IN (SELECT merchant_id FROM MerchantIds) ' +
+              '), ' +
+              'FilteredRows AS ( ' +
+              'SELECT * ' +
+              'FROM OrderedRows ' +
+              'WHERE RowNum <= @0 / @8 ' +
+              ') ' +
+              'UPDATE FilteredRows SET status = @1 ';
 
     let retry = true
     while (retry) {
       try {
-        await this.promotionGrabmartRepository.query(sql, [parseInt(process.env.BATCH_SIZE), updatestatus, process.env.BU, 1000, lastwait, process.env.BU, lastwait, parseInt(process.env.BATCH_SELLER_SIZE)]);
+        await this.promotionGrabmartRepository.query(sql, [parseInt(process.env.BATCH_SIZE), updatestatus, process.env.BU, 1000, lastwait, process.env.BU, lastwait, parseInt(process.env.BATCH_SELLER_SIZE), parseInt(process.env.BATCH_SELLER_SIZE)]);
 
         retry = false;
       } catch (error) {
