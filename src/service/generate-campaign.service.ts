@@ -90,7 +90,7 @@ export class GenerateCampaignService {
               ') ' +
               '), ' +
               'OrderedRows AS ( ' +
-              'SELECT ' +
+              'SELECT *, ' +
               'ROW_NUMBER() OVER (PARTITION BY merchant_id ORDER BY updated_date) AS RowNum ' +
               'FROM cfgsmp_promotion_grabmart ' +
               'WHERE bu = @5 ' +
@@ -156,7 +156,7 @@ export class GenerateCampaignService {
   }
 
   async processCampaignByMerchant(promotions : PromotionGrabmartEntity[], updatestatus : number) {
-    this.logger.log(updatestatus + " - Found remain promotion of each merchant to process : " + promotions.length)
+    this.logger.log(updatestatus + " - Found remain promotion of merchant " + promotions[0]?.merchant_id + " to process : " + promotions.length)
 
     for (const promotion of promotions) {
       if (promotion.promotion_mode === 'DELETE') {
