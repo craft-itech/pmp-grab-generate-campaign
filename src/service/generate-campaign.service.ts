@@ -90,7 +90,7 @@ export class GenerateCampaignService {
               ') ' +
               '), ' +
               'OrderedRows AS ( ' +
-              'SELECT *, ' +
+              'SELECT ' +
               'ROW_NUMBER() OVER (PARTITION BY merchant_id ORDER BY updated_date) AS RowNum ' +
               'FROM cfgsmp_promotion_grabmart ' +
               'WHERE bu = @5 ' +
