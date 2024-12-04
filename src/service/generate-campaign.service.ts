@@ -114,7 +114,7 @@ console.log(countResult);
                   'SELECT DISTINCT TOP (@7) merchant_id ' +
                   'FROM cfgsmp_promotion_grabmart ' +
                   'WHERE bu = @2 AND ((status > @3 AND status < @4) or status = 0) ' + 
-                  'AND ABS(CHECKSUM(merchant_id) % @9) = @10'
+                  'AND ABS(CHECKSUM(merchant_id) % @9) = @10' +
                   'AND merchant_id NOT IN ( ' +
                   'SELECT merchant_id ' +
                   'FROM cfgsmp_promotion_grabmart ' +
@@ -139,7 +139,7 @@ console.log(countResult);
     let retry = true
     while (retry) {
       try {
-        await this.promotionGrabmartRepository.query(sql, [parseInt(process.env.BATCH_SIZE), updatestatus, process.env.BU, 1000, lastwait, process.env.BU, lastwait, parseInt(process.env.BATCH_SELLER_SIZE), parseInt(process.env.BATCH_SELLER_SIZE), parseInt(process.env.MERCHANT_MOD), parseInt(process.env.MERCHANT_MOD_RES)]);
+        await this.promotionGrabmartRepository.query(sql, [parseInt(process.env.BATCH_SIZE), updatestatus, process.env.BU, 1000, lastwait, process.env.BU, lastwait, parseInt(process.env.BATCH_SELLER_SIZE), parseInt(process.env.MAX_QUEUE), parseInt(process.env.MERCHANT_MOD), parseInt(process.env.MERCHANT_MOD_RES)]);
 
         retry = false;
       } catch (error) {
