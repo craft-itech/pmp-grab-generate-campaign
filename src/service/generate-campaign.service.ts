@@ -114,7 +114,7 @@ console.log(countResult);
                   'SELECT DISTINCT TOP (@7) merchant_id ' +
                   'FROM cfgsmp_promotion_grabmart ' +
                   'WHERE bu = @2 AND ((status > @3 AND status < @4) or status = 0) ' + 
-                  'AND ABS(CHECKSUM(merchant_id) % @9) = @10' +
+                  'AND ABS(CHECKSUM(merchant_id) % @9) = @10 ' +
                   'AND merchant_id NOT IN ( ' +
                   'SELECT merchant_id ' +
                   'FROM cfgsmp_promotion_grabmart ' +
