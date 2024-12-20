@@ -11,6 +11,7 @@ export class RmqService {
     ) {
     }
 
+    /*
     @RabbitSubscribe({
         exchange: "cg.pmp.campaign.dx",
         routingKey: "00.10.06.12.01.00",
@@ -29,4 +30,5 @@ export class RmqService {
             this.logger.error('Error msg :' + error);
         }
     }
+        */
 }
