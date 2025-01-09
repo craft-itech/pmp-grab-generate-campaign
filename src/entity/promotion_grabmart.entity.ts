@@ -59,4 +59,7 @@ export class PromotionGrabmartEntity {
 
   @Column({ type: 'timestamp', name: 'updated_date' })
   updated_date: Date;
+
+  @Column({ name: 'error_msg' })
+  error_msg: string;
 }

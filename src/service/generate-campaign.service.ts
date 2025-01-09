@@ -30,14 +30,6 @@ export class GenerateCampaignService {
     private readonly httpService: HttpService,
     private readonly utilService: UtilService,
   ) {
-    /*
-    this.debounceTimeout = null;
-
-    setInterval(() => {
-      clearTimeout(this.debounceTimeout);
-      this.debounceTimeout = setTimeout(this.checkCampaign.bind(this), 60000);
-    }, 60000); 
-    */
     this.checkCampaign();
     setInterval(this.checkCampaign.bind(this), parseInt(process.env.BATCH_PERIOD)); 
   }
@@ -114,11 +106,13 @@ console.log(countResult);
                   'SELECT DISTINCT TOP (@7) merchant_id ' +
                   'FROM cfgsmp_promotion_grabmart ' +
                   'WHERE bu = @2 AND ((status > @3 AND status < @4) or status = 0) ' + 
+                  "AND ((promotion_mode = 'INSERT' AND convert(DATE, start_date, 23) < current_timestamp) OR (promotion_mode = 'DELETE' AND convert(DATE, end_date, 23) < current_timestamp)) " +
                   'AND ABS(CHECKSUM(merchant_id) % @9) = @10 ' +
                   'AND merchant_id NOT IN ( ' +
                   'SELECT merchant_id ' +
                   'FROM cfgsmp_promotion_grabmart ' +
-                  "WHERE bu = @2 AND status >= @6 " +
+                  'WHERE bu = @2 AND status >= @6 ' +
+                  "AND ((promotion_mode = 'INSERT' AND convert(DATE, start_date, 23) < current_timestamp) OR (promotion_mode = 'DELETE' AND convert(DATE, end_date, 23) < current_timestamp)) " +
                   ') ' +
                   '), ' +
                   'OrderedRows AS ( ' +
@@ -126,6 +120,7 @@ console.log(countResult);
                   'ROW_NUMBER() OVER (PARTITION BY merchant_id ORDER BY updated_date) AS RowNum ' +
                   'FROM cfgsmp_promotion_grabmart ' +
                   'WHERE bu = @5 ' +
+                  "AND ((promotion_mode = 'INSERT' AND convert(DATE, start_date, 23) < current_timestamp) OR (promotion_mode = 'DELETE' AND convert(DATE, end_date, 23) < current_timestamp)) " +
                   'AND ((status > @3 AND status < @4) OR status = 0) ' +
                   'AND merchant_id IN (SELECT merchant_id FROM MerchantIds) ' +
                   '), ' +
@@ -288,6 +283,7 @@ console.log(countResult);
           promotion.campaign_id = response.data.campaignID;
           promotion.status = 99;
           promotion.updated_date = new Date();
+          promotion.error_msg = null;
   
           this.promotionGrabmartRepository.save(promotion);
   
@@ -296,6 +292,7 @@ console.log(countResult);
         else {
           promotion.status = 0;
           promotion.updated_date = new Date();
+          promotion.error_msg = response.data.message;
   
           this.promotionGrabmartRepository.save(promotion);
 
@@ -305,15 +302,16 @@ console.log(countResult);
       else {
         promotion.status = 0;
         promotion.updated_date = new Date();
+        promotion.error_msg = 'Error status ' + response.status + ', please check log file.';
 
         this.promotionGrabmartRepository.save(promotion);
 
         this.logger.error(updatestatus + " - Failed to post campaign for merchant ID: " + merchantID + ' of ID ' + promotion.id + " response code: " + response.status);
-        //throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
       }
     } catch (error) {
       promotion.status = 0;
       promotion.updated_date = new Date();
+      promotion.error_msg = error;
 
       this.promotionGrabmartRepository.save(promotion);
 
@@ -330,7 +328,8 @@ console.log(countResult);
       if (response.status !== 200) {
         promotion.status = 0;
         promotion.updated_date = new Date();
-  
+        promotion.error_msg = 'Error status ' + response.status + ', please check log file.';
+
         this.promotionGrabmartRepository.save(promotion);
   
         throw new HttpException('Failed to delete resource', HttpStatus.INTERNAL_SERVER_ERROR);
@@ -338,7 +337,8 @@ console.log(countResult);
       else {
         promotion.status = 99;
         promotion.updated_date = new Date();
-  
+        promotion.error_msg = null;
+
         this.promotionGrabmartRepository.save(promotion);
 
         this.logger.debug(updatestatus + " - Successfully delete campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
@@ -346,6 +346,7 @@ console.log(countResult);
     } catch (error) {
       promotion.status = 0;
       promotion.updated_date = new Date();
+      promotion.error_msg = error;
 
       this.promotionGrabmartRepository.save(promotion);
 
@@ -361,10 +362,8 @@ console.log(countResult);
     // Return the populated GrabCampaignDto
     const campaignDto = new GrabCampaignDto();
     campaignDto.id = entity.campaign_id;
-    //campaignDto.createdBy = "PMP";
     campaignDto.merchantID = entity.merchant_id;
     campaignDto.name = entity.promotion_type;
-    //campaignDto.quotas = fetchedQuotas;
     campaignDto.conditions = fetchedConditions;
     campaignDto.discount = fetchedDiscount;
 
