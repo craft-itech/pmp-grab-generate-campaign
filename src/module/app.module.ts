@@ -1,6 +1,4 @@
-import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { Module } from '@nestjs/common';
-import { RmqService } from 'src/service/rmq.service';
 import { AppController } from '../controller/app.controller';
 import { format, transports } from "winston";
 import { winstonAzureBlob } from 'winston-azure-blob';
@@ -18,16 +16,6 @@ import { MasterGrabmartEntity } from 'src/entity/master_grabmart.entity';
 @Module({
   imports: [ConfigModule.forRoot(),
     
-  RabbitMQModule.forRoot(RabbitMQModule, {
-    uri: process.env.RMQ_URI,
-    channels: {
-      "channel-1": {
-        prefetchCount: 1,
-        default: true,
-      },
-    },
-  }),
-
   HttpModule.register({
     timeout: 3000,
   }),
@@ -70,7 +58,7 @@ import { MasterGrabmartEntity } from 'src/entity/master_grabmart.entity';
         level: process.env.LOG_LEVEL,
         bufferLogSize: 1,
         syncTimeout: 0,
-        rotatePeriod: 'YYYY-MM-DD-HH',
+        rotatePeriod: 'YYYY-MM-DD-HH-mm',
         eol: '\n',
       }),
     ],
@@ -80,7 +68,6 @@ import { MasterGrabmartEntity } from 'src/entity/master_grabmart.entity';
   ],
   controllers: [AppController],
   providers: [
-    RmqService, 
     UtilService, 
     GenerateCampaignService],
 })

@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity('cfgsmp_promotion_grabmart')
+@Entity(process.env.TABLE_PROMOTION_GRABMART)
 export class PromotionGrabmartEntity {
   @PrimaryGeneratedColumn('uuid', { name: 'id' })
   id: string;

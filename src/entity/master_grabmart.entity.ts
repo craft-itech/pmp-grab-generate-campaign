@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity('cfgsmp_master_grabmart')
+@Entity(process.env.TABLE_MASTER_GRABMART)
 export class MasterGrabmartEntity {
   @PrimaryGeneratedColumn()
   id: number;

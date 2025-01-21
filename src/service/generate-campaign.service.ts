@@ -29,12 +29,12 @@ export class GenerateCampaignService {
     @Inject(WINSTON_MODULE_NEST_PROVIDER) private readonly logger: LoggerService,
     private readonly httpService: HttpService,
     private readonly utilService: UtilService,
-  ) {
-    this.checkCampaign();
-    setInterval(this.checkCampaign.bind(this), parseInt(process.env.BATCH_PERIOD)); 
+  ) {}
+
+  async onModuleInit() {
+    await this.checkCampaign();
+    setInterval(this.checkCampaign.bind(this), parseInt(process.env.BATCH_PERIOD));
   }
-
-
   
   async getUpdateStatus() : Promise<number> {
     const updatestatus = new Date().getTime() - 1732000000000;
@@ -69,48 +69,16 @@ export class GenerateCampaignService {
     this.logger.debug(updatestatus + " - begin batch ");
 
     this.logger.debug(updatestatus + " - last wait is " + lastwait);
-
-    //const sql = 'UPDATE top(@0) cfgsmp_promotion_grabmart SET status = @1 WHERE bu = @2 AND ((status > @3 AND status < @4) OR status = 0) AND merchant_id not in (SELECT merchant_id FROM cfgsmp_promotion_grabmart WHERE bu = @5 AND status >= @6)';
-    //const sql = 'WITH OrderedRows AS (SELECT TOP (@0) * FROM cfgsmp_promotion_grabmart WHERE bu = @2 AND ((status > @3 AND status < @4) OR status = 0) AND merchant_id IN ( SELECT DISTINCT TOP(@7) merchant_id FROM cfgsmp_promotion_grabmart WHERE merchant_id NOT IN (SELECT merchant_id FROM cfgsmp_promotion_grabmart WHERE bu = @5 AND status >= @6)) ORDER BY updated_date ) UPDATE OrderedRows SET status = @1';
-   /*
-    const sql_count = 'WITH MerchantIds AS ( ' +
-    'SELECT DISTINCT TOP (@7) merchant_id ' +
-    'FROM cfgsmp_promotion_grabmart ' +
-    'WHERE ((status > @3 and status < @4) or status = 0) AND merchant_id NOT IN ( ' +
-    'SELECT merchant_id ' +
-    'FROM cfgsmp_promotion_grabmart ' +
-    "WHERE bu = @2 AND status >= @6 " +
-    ') ' +
-    '), ' +
-    'OrderedRows AS ( ' +
-    'SELECT *, ' +
-    'ROW_NUMBER() OVER (PARTITION BY merchant_id ORDER BY updated_date) AS RowNum ' +
-    'FROM cfgsmp_promotion_grabmart ' +
-    'WHERE bu = @5 ' +
-    'AND ((status > @3 AND status < @4) OR status = 0) ' +
-    'AND merchant_id IN (SELECT merchant_id FROM MerchantIds) ' +
-    '), ' +
-    'FilteredRows AS ( ' +
-    'SELECT * ' +
-    'FROM OrderedRows ' +
-    'WHERE RowNum <= @0 / @8 ' +
-    ') ' +
-    'SELECT COUNT(1) FROM FilteredRows ';
-
-const countResult = await this.promotionGrabmartRepository.query(sql_count, [parseInt(process.env.BATCH_SIZE), updatestatus, process.env.BU, 1000, lastwait, process.env.BU, lastwait, parseInt(process.env.BATCH_SELLER_SIZE), parseInt(process.env.BATCH_SELLER_SIZE)]);
-
-console.log(countResult);
-*/
-
-      const sql = 'WITH MerchantIds AS ( ' +
+    
+    const sql = 'WITH MerchantIds AS ( ' +
                   'SELECT DISTINCT TOP (@7) merchant_id ' +
-                  'FROM cfgsmp_promotion_grabmart ' +
+                  'FROM ' + process.env.TABLE_PROMOTION_GRABMART + ' '+
                   'WHERE bu = @2 AND ((status > @3 AND status < @4) or status = 0) ' + 
                   "AND ((promotion_mode = 'INSERT' AND convert(DATE, start_date, 23) < current_timestamp) OR (promotion_mode = 'DELETE' AND convert(DATE, end_date, 23) < current_timestamp)) " +
                   'AND ABS(CHECKSUM(merchant_id) % @9) = @10 ' +
                   'AND merchant_id NOT IN ( ' +
                   'SELECT merchant_id ' +
-                  'FROM cfgsmp_promotion_grabmart ' +
+                  'FROM ' + process.env.TABLE_PROMOTION_GRABMART + ' '+
                   'WHERE bu = @2 AND status >= @6 ' +
                   "AND ((promotion_mode = 'INSERT' AND convert(DATE, start_date, 23) < current_timestamp) OR (promotion_mode = 'DELETE' AND convert(DATE, end_date, 23) < current_timestamp)) " +
                   ') ' +
@@ -118,7 +86,7 @@ console.log(countResult);
                   'OrderedRows AS ( ' +
                   'SELECT *, ' +
                   'ROW_NUMBER() OVER (PARTITION BY merchant_id ORDER BY updated_date) AS RowNum ' +
-                  'FROM cfgsmp_promotion_grabmart ' +
+                  'FROM ' + process.env.TABLE_PROMOTION_GRABMART + ' '+
                   'WHERE bu = @5 ' +
                   "AND ((promotion_mode = 'INSERT' AND convert(DATE, start_date, 23) < current_timestamp) OR (promotion_mode = 'DELETE' AND convert(DATE, end_date, 23) < current_timestamp)) " +
                   'AND ((status > @3 AND status < @4) OR status = 0) ' +
@@ -165,6 +133,37 @@ console.log(countResult);
     this.logger.debug(updatestatus + " - finish batch ");
   }
 
+  async processNetCampaign(promotion : PromotionGrabmartEntity, updatestatus : number) {
+    const master = await this.masterGrabmartRepository.findOne({
+      where: {
+        status: LessThan(0),
+        barcode: promotion.barcode,
+        seller_id: promotion.merchant_id,
+      }
+    });
+
+    if (master) {
+      if (master.sold_by_weight) {
+        if (master.weight_unit === 'g') {
+          promotion.campaign_value = Math.ceil((parseInt(promotion.campaign_value) * master.weigth_value)/1000).toString();
+        }
+        else {
+          promotion.campaign_value = Math.ceil(parseInt(promotion.campaign_value) * master.weigth_value).toString();
+        }
+      }
+
+      await this.processCampaign(promotion, updatestatus);
+    }
+    else {
+      promotion.status = 0;
+      promotion.updated_date = new Date();
+
+      this.promotionGrabmartRepository.save(promotion);
+
+      this.logger.debug(updatestatus + ' - Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' barcode ' + promotion.barcode + ' master not sync success ');
+    }
+  }
+
   async processCampaignByMerchant(promotions : PromotionGrabmartEntity[], updatestatus : number) {
     this.logger.log(updatestatus + " - Found remain promotion of merchant " + promotions[0]?.merchant_id + " to process : " + promotions.length)
 
@@ -187,34 +186,7 @@ console.log(countResult);
         this.promotionGrabmartRepository.save(promotion);
       }
       else if (promotion.grab_promotion_type === 'net') {
-        const master = await this.masterGrabmartRepository.findOne({
-          where: {
-            status: LessThan(0),
-            barcode: promotion.barcode,
-            seller_id: promotion.merchant_id,
-          }
-        });
-
-        if (master) {
-          if (master.sold_by_weight) {
-            if (master.weight_unit === 'g') {
-              promotion.campaign_value = Math.ceil((parseInt(promotion.campaign_value) * master.weigth_value)/1000).toString();
-            }
-            else {
-              promotion.campaign_value = Math.ceil(parseInt(promotion.campaign_value) * master.weigth_value).toString();
-            }
-          }
-
-          await this.processCampaign(promotion, updatestatus);
-        }
-        else {
-          promotion.status = 0;
-          promotion.updated_date = new Date();
-    
-          this.promotionGrabmartRepository.save(promotion);
-    
-          this.logger.debug(updatestatus + ' - Promotion ' + promotion.promotion_no + ' of ID ' + promotion.id + ' barcode ' + promotion.barcode + ' master not sync success ');
-        }
+        await this.processNetCampaign(promotion, updatestatus);
       }
       else {
         const barcodes = promotion.barcode?.split(',');
@@ -243,10 +215,6 @@ console.log(countResult);
         }
       }
     }
-    
-    //get campaign
-    //check masteer
-    //process promotion
   }
 
   async readCampaign(merchantID: string) {
@@ -311,7 +279,7 @@ console.log(countResult);
     } catch (error) {
       promotion.status = 0;
       promotion.updated_date = new Date();
-      promotion.error_msg = error;
+      promotion.error_msg = JSON.stringify(error);
 
       this.promotionGrabmartRepository.save(promotion);
 
@@ -346,7 +314,7 @@ console.log(countResult);
     } catch (error) {
       promotion.status = 0;
       promotion.updated_date = new Date();
-      promotion.error_msg = error;
+      promotion.error_msg = JSON.stringify(error);
 
       this.promotionGrabmartRepository.save(promotion);
 
