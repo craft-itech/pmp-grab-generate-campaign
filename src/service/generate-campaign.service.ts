@@ -17,6 +17,7 @@ import { Day } from 'src/dtos/grab/condition/day.dto';
 import { WorkingHour } from 'src/dtos/grab/condition/workinghour.dto';
 import { MasterGrabmartEntity } from 'src/entity/master_grabmart.entity';
 import { parse } from 'date-fns';
+import { isAxiosError } from 'axios';
 
 @Injectable()
 export class GenerateCampaignService {
@@ -312,9 +313,20 @@ export class GenerateCampaignService {
         this.logger.debug(updatestatus + " - Successfully delete campaign for merchant ID: " + merchantID  + ' of ID ' + promotion.id+ " get campaign id: " + promotion.campaign_id);
       }
     } catch (error) {
-      promotion.status = 0;
       promotion.updated_date = new Date();
-      promotion.error_msg = JSON.stringify(error);
+      if (isAxiosError(error)) {
+        promotion.error_msg = JSON.stringify({ error, data: error.response?.data });
+        if (error.response?.data?.statusCode === 'CFG-C-9998') {
+          promotion.status = 88;
+        } else if(error.response?.data?.statusCode === 'CFG-C-9999') {
+          promotion.status = 0;
+        } else {
+          promotion.status = 0;
+        }
+      } else {
+        promotion.status = 88;
+        promotion.error_msg = JSON.stringify(error);
+      }
 
       this.promotionGrabmartRepository.save(promotion);
 

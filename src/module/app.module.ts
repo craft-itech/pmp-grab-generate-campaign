@@ -17,7 +17,7 @@ import { MasterGrabmartEntity } from 'src/entity/master_grabmart.entity';
   imports: [ConfigModule.forRoot(),
     
   HttpModule.register({
-    timeout: 3000,
+    timeout: 10000,
   }),
                
   WinstonModule.forRoot({
