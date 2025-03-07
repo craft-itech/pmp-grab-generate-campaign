@@ -19,7 +19,9 @@ elif [ $env = "sit" ]; then
 elif [ $env = "uat" ]; then
     echo "Promoting version $tag to pmpactive-uat"
     kubectl set image deploy/pmp-promotion-grabmart-producer pmp-promotion-consumer=cgacraksnonprd.azurecr.io/pmp/pmp-promotion-grabmart-producer:"$tag" -n pmpactive-uat
+    kubectl set image deploy/pmp-promotion-grabmart-smallformat-producer pmp-promotion-grabmart-smallformat-producer=cgacraksnonprd.azurecr.io/pmp/pmp-promotion-grabmart-producer:"$tag" -n pmpactive-uat
     kubectl set image deploy/pmp-promotion-grabmart-producer-2 pmp-promotion-consumer=cgacraksnonprd.azurecr.io/pmp/pmp-promotion-grabmart-producer:"$tag" -n pmpactive-uat
+    kubectl set image deploy/pmp-promotion-grabmart-smallformat-producer-2 pmp-promotion-grabmart-smallformat-producer-2=cgacraksnonprd.azurecr.io/pmp/pmp-promotion-grabmart-producer:"$tag" -n pmpactive-uat
 else
     echo "Invalid environment"
     exit 1
