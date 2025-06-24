@@ -98,7 +98,7 @@ export class GenerateCampaignService {
       ' ' +
       'WHERE bu = @2 AND ((status > @3 AND status < @4) or status = 0) ' +
       // "AND ((promotion_mode = 'INSERT' AND convert(DATE, start_date, 23) < current_timestamp) OR (promotion_mode = 'DELETE' AND convert(DATE, end_date, 23) < current_timestamp)) " +
-      "AND ((promotion_mode = 'INSERT' AND start_date < @11) OR (promotion_mode = 'DELETE' AND end_date < @11)) " +
+      "AND ((promotion_mode = 'INSERT' AND start_date <= @11) OR (promotion_mode = 'DELETE' AND end_date <= @11)) " +
       'AND ABS(CHECKSUM(merchant_id) % @9) = @10 ' +
       'AND merchant_id NOT IN ( ' +
       'SELECT merchant_id ' +
@@ -107,7 +107,7 @@ export class GenerateCampaignService {
       ' ' +
       'WHERE bu = @2 AND status >= @6 ' +
       // "AND ((promotion_mode = 'INSERT' AND convert(DATE, start_date, 23) < current_timestamp) OR (promotion_mode = 'DELETE' AND convert(DATE, end_date, 23) < current_timestamp)) " +
-      "AND ((promotion_mode = 'INSERT' AND start_date < @11) OR (promotion_mode = 'DELETE' AND end_date < @11)) " +
+      "AND ((promotion_mode = 'INSERT' AND start_date <= @11) OR (promotion_mode = 'DELETE' AND end_date <= @11)) " +
       ') ' +
       '), ' +
       'OrderedRows AS ( ' +
@@ -118,7 +118,7 @@ export class GenerateCampaignService {
       ' ' +
       'WHERE bu = @5 ' +
       // "AND ((promotion_mode = 'INSERT' AND convert(DATE, start_date, 23) < current_timestamp) OR (promotion_mode = 'DELETE' AND convert(DATE, end_date, 23) < current_timestamp)) " +
-      "AND ((promotion_mode = 'INSERT' AND start_date < @11) OR (promotion_mode = 'DELETE' AND end_date < @11)) " +
+      "AND ((promotion_mode = 'INSERT' AND start_date <= @11) OR (promotion_mode = 'DELETE' AND end_date <= @11)) " +
       'AND ((status > @3 AND status < @4) OR status = 0) ' +
       'AND merchant_id IN (SELECT merchant_id FROM MerchantIds) ' +
       '), ' +
